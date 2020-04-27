@@ -1,0 +1,258 @@
+<Window x:Class="WcfWuRemoteClient.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WcfWuRemoteClient"
+        xmlns:viewModels="clr-namespace:WcfWuRemoteClient.ViewModels"
+        xmlns:converter="clr-namespace:WcfWuRemoteClient.Converter"
+        mc:Ignorable="d"
+        Title="Windows Update Remote Client" Height="400" Width="700" Icon="/WcfWuRemoteClient;component/AUTOMATIC UPDATES.ico">
+    <Window.Resources>
+        <converter:StateProgressToStringConverter x:Key="StateProgressToStringConverter" />
+        <converter:CallResultToStringConverter x:Key="CallResultToStringConverter" />
+        <converter:CallResultToBitmapConverter x:Key="CallResultToBitmapConverter" />
+        <converter:BytesToHumanReadableConverter x:Key="BytesToHumanReadableConverter" />
+        <converter:VisibilityToBoolConverter x:Key="VisibilityToBoolConverter" />
+        <converter:UpdateDescArrayToStatsStringConverter x:Key="UpdateDescToStatsConverter" />
+        <BitmapImage x:Key="TaskIcon" UriSource="/Images/Task.ico" />
+        <CollectionViewSource Source="{Binding CommandHistoryFiltered, UpdateSourceTrigger=PropertyChanged}" x:Name="cvs" x:Key="cvs" IsLiveFilteringRequested="True" />
+    </Window.Resources>
+    <Window.CommandBindings>
+        <CommandBinding Command="Refresh" Executed="RefreshBinding_Executed" CanExecute="RefreshBinding_CanExecute" />
+    </Window.CommandBindings>
+    <Window.InputBindings>
+        <KeyBinding  Command="Refresh" Key="F5"></KeyBinding>
+    </Window.InputBindings>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="20" />
+            <RowDefinition Height="2*" />
+            <RowDefinition Height="5" />
+            <RowDefinition Height="1*" />
+        </Grid.RowDefinitions>
+        <Menu IsMainMenu="True" Grid.Row="0">
+            <MenuItem Header="_Add Host" Click="AddEndpoint_Click" />
+            <MenuItem Header="View" ItemsSource="{Binding Columns, ElementName=DataGridEndpoints}">
+                <MenuItem.ItemContainerStyle>
+                    <Style TargetType="{x:Type MenuItem}">
+                        <Setter Property="StaysOpenOnClick" Value="True" />
+                    </Style>
+                </MenuItem.ItemContainerStyle>
+                <MenuItem.Resources>
+                    <DataTemplate DataType="{x:Type DataGridTextColumn}">
+                        <StackPanel Orientation="Horizontal">
+                            <CheckBox Margin="-25, 2,0,0" IsChecked="{Binding Path=Visibility, Converter={StaticResource VisibilityToBoolConverter}}" />
+                            <TextBlock Text="{Binding Path=Header.Text}" />
+                        </StackPanel>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type DataGridTemplateColumn}">
+                        <StackPanel Orientation="Horizontal">
+                            <CheckBox Margin="-25, 2,0,0" IsChecked="{Binding Path=Visibility, Converter={StaticResource VisibilityToBoolConverter}}" />
+                            <TextBlock Text="{Binding Path=Header.Text}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </MenuItem.Resources>
+            </MenuItem>
+            <MenuItem Header="_About" Click="About_Click" />
+        </Menu>
+        <Grid Grid.Row="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="25" />
+                <RowDefinition Height="1*" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="100" />
+            </Grid.ColumnDefinitions>
+            <Label Grid.Row="0" Grid.Column="0" FontWeight="SemiBold">Hostlist</Label>
+            <Label Grid.Row="0" Grid.Column="1" FontWeight="SemiBold">Commands</Label>
+            <ItemsControl Grid.Row="1" Grid.Column="1" ItemsSource="{Binding CommadButtonItems}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type viewModels:MenuItemViewModel}">
+                        <Button Content="{Binding Header}" Command="{Binding Command}" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <DataGrid Grid.Row="1" Grid.Column="0" x:Name="DataGridEndpoints" Margin="0,0,0,0" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" AutoGenerateColumns="False" SelectionMode="Extended" IsReadOnly="True" ItemsSource="{Binding Endpoints, Mode=OneWay}" SelectionChanged="DataGridEndpoints_SelectionChanged">
+                <DataGrid.Resources>
+                    <Style TargetType="DataGridRow">
+                        <EventSetter Event="MouseDoubleClick" Handler="EndpointRow_DoubleClick"/>
+                    </Style>
+                </DataGrid.Resources>
+                <DataGrid.Columns>
+                    <DataGridTextColumn Binding="{Binding ConnectionState, Mode=OneWay}">
+                        <DataGridTextColumn.Header>
+                            <TextBlock ToolTip="Status of the connection">Connection</TextBlock>
+                        </DataGridTextColumn.Header>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Binding="{Binding FQDN, Mode=OneWay}">
+                        <DataGridTextColumn.Header>
+                            <TextBlock ToolTip="Hostname">Host</TextBlock>
+                        </DataGridTextColumn.Header>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Binding="{Binding Path=State.DisplayName, Mode=OneWay}">
+                        <DataGridTextColumn.Header>
+                            <TextBlock ToolTip="Current state of the update service">State</TextBlock>
+                        </DataGridTextColumn.Header>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Binding="{Binding Path=State.Description, Mode=OneWay}">
+                        <DataGridTextColumn.Header>
+                            <TextBlock ToolTip="Additional information">Add. info.</TextBlock>
+                        </DataGridTextColumn.Header>
+                    </DataGridTextColumn>
+                    <DataGridTemplateColumn>
+                        <DataGridTemplateColumn.Header>
+                            <TextBlock ToolTip="Progress of the current operation.">
+                                <TextBlock.Text>Progress</TextBlock.Text>
+                            </TextBlock>
+                        </DataGridTemplateColumn.Header>
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <ProgressBar Grid.Column="0"  Minimum="0" Maximum="100" Value="{Binding Path=State.Progress.Percent, Mode=OneWay}" IsIndeterminate="{Binding Path=State.Progress.IsIndeterminate, Mode=OneWay}" />
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Path=State, Mode=OneWay, Converter={StaticResource StateProgressToStringConverter}}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Grid>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Binding="{Binding Path=State.InstallerStatus, Mode=OneWay}" Visibility="Collapsed">
+                        <DataGridTextColumn.Header>
+                            <TextBlock ToolTip="Status of the update installer component.">Installer status</TextBlock>
+                        </DataGridTextColumn.Header>
+                    </DataGridTextColumn>
+                    <DataGridTemplateColumn>
+                        <DataGridTemplateColumn.Header>
+                            <TextBlock ToolTip="Available Updates (Important + Optional)">
+                                <TextBlock.Text>Avail u.</TextBlock.Text>
+                            </TextBlock>
+                        </DataGridTemplateColumn.Header>
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock>
+                                    <Run Text="" />
+                                    <Run Text="{Binding Path=Updates, Mode=OneWay, Converter={StaticResource UpdateDescToStatsConverter}, ConverterParameter={x:Static converter:UpdateDescArrayToStatsStringConverter+StatsConverterParameter.UpdateCount}}"  />
+                                    <Run Text="(" />
+                                    <Run Text="{Binding Path=Updates, Mode=OneWay, Converter={StaticResource UpdateDescToStatsConverter}, ConverterParameter={x:Static converter:UpdateDescArrayToStatsStringConverter+StatsConverterParameter.ImportantUpdateCount}}"  />
+                                    <Run Text="+" />
+                                    <Run Text="{Binding Path=Updates, Mode=OneWay, Converter={StaticResource UpdateDescToStatsConverter}, ConverterParameter={x:Static converter:UpdateDescArrayToStatsStringConverter+StatsConverterParameter.OptionalUpdateCount}}"  />
+                                    <Run Text=")" />
+                                </TextBlock>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Binding="{Binding Path=Updates, Mode=OneWay, Converter={StaticResource UpdateDescToStatsConverter}, ConverterParameter={x:Static converter:UpdateDescArrayToStatsStringConverter+StatsConverterParameter.SelectedUpdateCount}}">
+                        <DataGridTextColumn.Header>
+                            <TextBlock ToolTip="Selected Updates">Sel. u.</TextBlock>
+                        </DataGridTextColumn.Header>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Binding="{Binding Path=State.Enviroment.UpTime, Mode=OneWay, StringFormat={}{0:dd}:{0:hh}:{0:mm}, FallbackValue=00:00:00}">
+                        <DataGridTextColumn.Header>
+                            <TextBlock ToolTip="Uptime (dd:hh:mm)">Uptime</TextBlock>
+                        </DataGridTextColumn.Header>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Binding="{Binding Path=Settings.AutoSelectUpdates, Mode=OneWay}" Visibility="Collapsed">
+                        <DataGridTextColumn.Header>
+                            <TextBlock ToolTip="Automatically select important updates for download and installation.">Auto. select</TextBlock>
+                        </DataGridTextColumn.Header>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Binding="{Binding Path=Settings.AutoAcceptEulas, Mode=OneWay}" Visibility="Collapsed">
+                        <DataGridTextColumn.Header>
+                            <TextBlock ToolTip="Automatically accept EULAs for updates.">Auto. acc. EULAs.</TextBlock>
+                        </DataGridTextColumn.Header>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Binding="{Binding Path=State.Enviroment.FreeSpace, Converter={StaticResource BytesToHumanReadableConverter}, Mode=OneWay}">
+                        <DataGridTextColumn.Header>
+                            <TextBlock ToolTip="Free space on systemdrive.">Free space</TextBlock>
+                        </DataGridTextColumn.Header>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Binding="{Binding Path=State.Enviroment.OperatingSystemName, Mode=OneWay}" Visibility="Collapsed">
+                        <DataGridTextColumn.Header>
+                            <TextBlock ToolTip="Operating system version">OS Version</TextBlock>
+                        </DataGridTextColumn.Header>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Binding="{Binding Path=State.Enviroment.UpdateServer, Mode=OneWay}" Visibility="Collapsed">
+                        <DataGridTextColumn.Header>
+                            <TextBlock ToolTip="Update server where the host will search and download updates.">Update-Server</TextBlock>
+                        </DataGridTextColumn.Header>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Binding="{Binding Path=State.Enviroment.TargetGroup, Mode=OneWay}">
+                        <DataGridTextColumn.Header>
+                            <TextBlock ToolTip="WSUS targeting group.">Target group</TextBlock>
+                        </DataGridTextColumn.Header>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Visibility="Collapsed">
+                        <DataGridTextColumn.Binding>
+                            <MultiBinding StringFormat=" {0} / {1} / {2} sec">
+                                <Binding Path="Settings.SearchTimeoutSec"/>
+                                <Binding Path="Settings.DownloadTimeoutSec"/>
+                                <Binding Path="Settings.InstallTimeoutSec"/>
+                            </MultiBinding>
+                        </DataGridTextColumn.Binding>
+                        <DataGridTextColumn.Header>
+                            <TextBlock ToolTip="Timeout for searching, downloading and installing updates">Timeouts</TextBlock>
+                        </DataGridTextColumn.Header>
+                    </DataGridTextColumn>
+                </DataGrid.Columns>
+                <DataGrid.ContextMenu>
+                    <ContextMenu x:Name="CommandContextMenu" ItemsSource="{Binding ContextMenuItems}">
+                        <ContextMenu.ItemContainerStyle>
+                            <Style TargetType="{x:Type MenuItem}">
+                                <Setter Property="Command" Value="{Binding Command}" />
+                            </Style>
+                        </ContextMenu.ItemContainerStyle>
+                        <ContextMenu.ItemTemplate>
+                            <HierarchicalDataTemplate DataType="{x:Type viewModels:MenuItemViewModel}" ItemsSource="{Binding Path=MenuItems}">
+                                <TextBlock Text="{Binding Header}"/>
+                            </HierarchicalDataTemplate>
+                        </ContextMenu.ItemTemplate>
+                    </ContextMenu>
+                </DataGrid.ContextMenu>
+            </DataGrid>
+        </Grid>
+        <GridSplitter Grid.Row="2" Height="5" HorizontalAlignment="Stretch" />
+        <Grid Grid.Row="3">
+            <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="25" />
+                    <RowDefinition Height="1*" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*" />
+                    <ColumnDefinition Width="25" />
+                    <ColumnDefinition Width="25" />
+                </Grid.ColumnDefinitions>
+                <Label Grid.Row="0" Grid.Column="0" FontWeight="SemiBold">Execution Results</Label>
+                <Button Grid.Row="0" Grid.Column="1" Background="White" BorderBrush="White" ToolTip="Show only running and failed commands" Click="FilterCommandHistory_Click">
+                    <Image Source="{Binding FilterCommandHistoryIcon, UpdateSourceTrigger=PropertyChanged}" Height="16" Width="16" />
+                </Button>
+                <Button Grid.Row="0" Grid.Column="2" Background="White" BorderBrush="White" ToolTip="Clear result list" Click="ClearCommandHistory_Click">
+                    <Image Source="/Images/ClearCollection.png" Height="16" Width="16" />
+                </Button>
+                <DataGrid Grid.Row="1" Grid.ColumnSpan="3" x:Name="DataGridTaskResults" Margin="0,0,0,0" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" AutoGenerateColumns="False" IsReadOnly="True" ItemsSource="{Binding Source={StaticResource cvs}, Mode=OneWay}">
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Width="30">
+                            <DataGridTemplateColumn.Header>
+                                <Image Source="{StaticResource TaskIcon}" Height="12" ToolTip="Task" />
+                            </DataGridTemplateColumn.Header>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Image Height="12" HorizontalAlignment="Left"
+                                        Source="{Binding Path=Result, Converter={StaticResource CallResultToBitmapConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                                        <Image.ToolTip>
+                                            <TextBlock Text="{Binding Path=Result, Converter={StaticResource CallResultToStringConverter}}" />
+                                        </Image.ToolTip>
+                                    </Image>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="Date" Binding="{Binding Date, Mode=OneWay}" />
+                        <DataGridTextColumn Header="Host" Binding="{Binding EndpointName, Mode=OneWay}"/>
+                        <DataGridTextColumn Header="Command" Binding="{Binding CallName, Mode=OneWay}"/>
+                        <DataGridTextColumn Header="Add. Info." Binding="{Binding Path=Result.Message, Mode=OneWay}" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

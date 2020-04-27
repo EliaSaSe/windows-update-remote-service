@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net452</TargetFramework>
+    <Version>1.0.1.14</Version>
+    <Authors>Elia Seikritt</Authors>
+    <Product>WindowsUpdateApiController</Product>
+    <NeutralLanguage>en</NeutralLanguage>
+    <Copyright>Copyright(C) 2016-2020 Elia Seikritt</Copyright>
+  </PropertyGroup>
+  <ItemGroup>
+    <COMReference Include="WUApiLib.dll">
+      <Guid>b596cc9f-56e5-419e-a622-e01bb457431e</Guid>
+      <VersionMajor>2</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Lcid>0</Lcid>
+      <Isolated>false</Isolated>
+      <EmbedInteropTypes>true</EmbedInteropTypes>
+    </COMReference>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="log4net" Version="2.0.5" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\WuDataContract\WuDataContract.csproj" />
+  </ItemGroup>
+</Project>

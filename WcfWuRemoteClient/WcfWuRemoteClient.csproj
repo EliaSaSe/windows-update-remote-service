@@ -1,0 +1,249 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net453</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <TargetFramework>net452</TargetFramework>
+    <Version>1.0.3.1</Version>
+    <Authors>Elia Seikritt</Authors>
+    <Product>WcfWuRemoteClient</Product>
+    <NeutralLanguage>en</NeutralLanguage>
+    <Copyright>Copyright(C) 2016-2020 Elia Seikritt</Copyright>
+    <ApplicationIcon>AUTOMATIC UPDATES.ico</ApplicationIcon>
+    <StartupObject>WcfWuRemoteClient.App</StartupObject>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="log4net" Version="2.0.5" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\WuDataContract\WuDataContract.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="App.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\StatusRun.ico" />
+    <Resource Include="Images\StatusCriticalError.ico" />
+    <Resource Include="Images\StatusOK.ico" />
+    <Resource Include="Images\Task.ico" />
+    <Resource Include="AUTOMATIC UPDATES.ico" />
+    <Resource Include="Images\ClearCollection.png" />
+    <Resource Include="Images\DeleteFilter.png" />
+    <Resource Include="Images\Filter.ico" />
+  </ItemGroup>
+</Project>
+<!--
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{7484696F-A572-45F4-834C-C5B406282CEA}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>WcfWuRemoteClient</RootNamespace>
+    <AssemblyName>WcfWuRemoteClient</AssemblyName>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <WarningLevel>4</WarningLevel>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <UpdateAssemblyVersion>True</UpdateAssemblyVersion>
+    <UpdateAssemblyFileVersion>True</UpdateAssemblyFileVersion>
+    <UpdateAssemblyInfoVersion>True</UpdateAssemblyInfoVersion>
+    <AssemblyVersionSettings>None.None.IncrementOnDemandWithReset.Increment</AssemblyVersionSettings>
+    <AssemblyFileVersionSettings>None.None.IncrementOnDemandWithReset.Increment</AssemblyFileVersionSettings>
+    <AssemblyInfoVersionSettings>None.None.IncrementOnDemandWithReset.Increment</AssemblyInfoVersionSettings>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>AUTOMATIC UPDATES.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Xml" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Xaml">
+      <RequiredTargetFramework>4.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="WindowsBase" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="App.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Compile Include="Commands\Calls\AcceptEulaCall.cs" />
+    <Compile Include="Commands\Calls\BeginDownloadCall.cs" />
+    <Compile Include="Commands\Calls\BeginInstallationCall.cs" />
+    <Compile Include="Commands\Calls\AbortCall.cs" />
+    <Compile Include="Commands\Calls\WuRemoteCallContext.cs" />
+    <Compile Include="Commands\Calls\ReconnectCall.cs" />
+    <Compile Include="Commands\Calls\RefreshCall.cs" />
+    <Compile Include="Commands\Calls\SetAutoSelectCall.cs" />
+    <Compile Include="Commands\Calls\SetAutoAcceptEulaCall.cs" />
+    <Compile Include="Commands\Calls\ResetCall.cs" />
+    <Compile Include="Commands\Calls\RebootCall.cs" />
+    <Compile Include="Commands\Calls\BeginSearchCall.cs" />
+    <Compile Include="Commands\Calls\SetUpdateSelectionCall.cs" />
+    <Compile Include="Commands\DisconnectEndpointsCommand.cs" />
+    <Compile Include="Commands\OpenUpdateOverviewCommand.cs" />
+    <Compile Include="Commands\WuEndpointCommand.cs" />
+    <Compile Include="Commands\Calls\WuRemoteCall.cs" />
+    <Compile Include="Commands\Calls\WuRemoteCallResult.cs" />
+    <Compile Include="Converter\BooleanInversionConverter.cs" />
+    <Compile Include="Converter\BooleanToStatusBitmapConverter.cs" />
+    <Compile Include="Converter\BooleanToUpdateSeverityStringConverter.cs" />
+    <Compile Include="Converter\CallResultToBitmapConverter.cs" />
+    <Compile Include="Converter\BytesToHumanReadableConverter.cs" />
+    <Compile Include="Converter\UpdateDescArrayToStatsStringConverter.cs" />
+    <Compile Include="Converter\VisibilityToBoolConverter.cs" />
+    <Compile Include="InteractionServices\IModalService.cs" />
+    <Compile Include="InteractionServices\WpfModalService.cs" />
+    <Compile Include="Models\IWuEndpoint.cs" />
+    <Compile Include="Exceptions\EndpointNeedsUpgradeException.cs" />
+    <Compile Include="Exceptions\EndpointNotSupportedException.cs" />
+    <Compile Include="ViewModels\AddHostViewModel.cs" />
+    <Compile Include="ViewModels\InfoWindowViewModel.cs" />
+    <Compile Include="ViewModels\MainWindowViewModel.cs" />
+    <Compile Include="ViewModels\UpdateDescriptionViewModel.cs" />
+    <Compile Include="ViewModels\UpdateOverviewViewModel.cs" />
+    <Compile Include="ViewModels\WuEndpointBasedViewModel.cs" />
+    <Compile Include="Views\InfoWindow.xaml.cs">
+      <DependentUpon>InfoWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\LoadingIndicator.xaml.cs">
+      <DependentUpon>LoadingIndicator.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Converter\StateProgressToStringConverter.cs" />
+    <Compile Include="Commands\Calls\WuRemoteCallHistory.cs" />
+    <Compile Include="Converter\CallResultToStringConverter.cs" />
+    <Compile Include="ViewModels\MenuItemViewModel.cs" />
+    <Compile Include="Views\UpdateOverviewWindow.xaml.cs">
+      <DependentUpon>UpdateOverviewWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Models\WuEndpoint.cs" />
+    <Compile Include="Models\WuEndpointCollection.cs" />
+    <Page Include="Views\InfoWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\LoadingIndicator.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\AddEndpointWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\MainWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Compile Include="Views\AddEndpointWindow.xaml.cs">
+      <DependentUpon>AddEndpointWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="App.xaml.cs">
+      <DependentUpon>App.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Models\AsyncObservableCollection.cs" />
+    <Compile Include="Views\MainWindow.xaml.cs">
+      <DependentUpon>MainWindow.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Page Include="Views\UpdateOverviewWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <AppDesigner Include="Properties\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\WuDataContract\WuDataContract.csproj">
+      <Project>{f9f7136d-e93b-4789-95e0-734d364b726d}</Project>
+      <Name>WuDataContract</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\StatusRun.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\StatusCriticalError.ico" />
+    <Resource Include="Images\StatusOK.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\Task.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="AUTOMATIC UPDATES.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\ClearCollection.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\DeleteFilter.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\Filter.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="log4net">
+      <Version>2.0.5</Version>
+    </PackageReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
+-->

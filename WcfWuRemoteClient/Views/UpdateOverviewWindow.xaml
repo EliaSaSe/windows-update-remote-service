@@ -1,0 +1,107 @@
+﻿<Window x:Class="WcfWuRemoteClient.Views.UpdateOverviewWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WcfWuRemoteClient.Views"
+        xmlns:converter="clr-namespace:WcfWuRemoteClient.Converter"
+        mc:Ignorable="d"
+        xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+        Title="Applicable Updates" Height="400" Width="700" Icon="/WcfWuRemoteClient;component/AUTOMATIC UPDATES.ico">
+    <Window.Resources>
+        <converter:BytesToHumanReadableConverter x:Key="BytesToHumanReadableConverter" />
+        <converter:BooleanInversionConverter x:Key="BooleanInversionConverter" />
+        <converter:BooleanToStatusBitmapConverter x:Key="BooleanToStatusBitmapConverter" />
+        <converter:BooleanToUpdateSeverityStringConverter x:Key="UpdateSeverityConverter" />
+        
+        <CollectionViewSource Source="{Binding Updates}" x:Name="cvs" x:Key="cvs" IsLiveSortingRequested="True">
+            <CollectionViewSource.SortDescriptions>
+                <scm:SortDescription Direction="Descending" PropertyName="IsImportant"/>
+            </CollectionViewSource.SortDescriptions>
+        </CollectionViewSource>
+        
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="20" />
+            <RowDefinition Height="30" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="70" />
+        </Grid.RowDefinitions>
+        <Menu IsMainMenu="True" Grid.Row="0">
+            <MenuItem Header="_Refresh" Click="Refresh_Click"/>
+            <local:LoadingIndicator Height="15" Width="15" x:Name="Loading" />
+        </Menu>
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Label Grid.Row="0" Grid.Column="0" Content="Host:"/>
+            <Label Grid.Row="0" Grid.Column="1" Content="..." x:Name="HostNameLabel"/>
+        </Grid>
+        <DataGrid x:Name="UpdateGrid" Grid.Row="2" IsEnabled="False" AutoGenerateColumns="False" ItemsSource="{Binding Source={StaticResource cvs}}">
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <Setter Property="ToolTip">
+                        <Setter.Value>
+                            <TextBlock Text="{Binding Description, Mode=OneWay}" />
+                        </Setter.Value>
+                    </Setter>
+                    <!--<Setter Property="IsEnabled" Value="{Binding Path=IsLoading, Converter={StaticResource BooleanInversionConverter}, UpdateSourceTrigger=PropertyChanged}" />-->
+                </Style>
+            </DataGrid.RowStyle>
+            <DataGrid.Columns>
+                <DataGridTemplateColumn>
+                    <DataGridTemplateColumn.Header>
+                                <TextBlock ToolTip="Only selected updates will be downloaded and installed.">Selected</TextBlock>
+                    </DataGridTemplateColumn.Header>
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <CheckBox HorizontalAlignment="Center" IsChecked="{Binding Selected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="Severity" Binding="{Binding IsImportant, Converter={StaticResource UpdateSeverityConverter}, Mode=OneWay}" />
+                <DataGridTemplateColumn>
+                    <DataGridTemplateColumn.Header>
+                        <TextBlock ToolTip="Allows to accept the EULA of an update.">EULA</TextBlock>
+                    </DataGridTemplateColumn.Header>
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <CheckBox HorizontalAlignment="Center" IsChecked="{Binding EulaAccepted, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding EulaAccepted, Converter={StaticResource BooleanInversionConverter}}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="Title" Binding="{Binding Title, Mode=OneWay}"/>
+                <DataGridTextColumn Header="Size" Binding="{Binding MaxByteSize, Mode=OneWay, Converter={StaticResource BytesToHumanReadableConverter}}" />
+                <DataGridTemplateColumn Header="Downloaded">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Image Height="12" HorizontalAlignment="Center" Source="{Binding IsDownloaded, Converter={StaticResource BooleanToStatusBitmapConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Installed">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Image Height="12" HorizontalAlignment="Center" Source="{Binding IsInstalled, Converter={StaticResource BooleanToStatusBitmapConverter}, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+        <StackPanel Grid.Row="3">
+            <Label>Settings for this host:</Label>
+            <CheckBox Margin ="5 0 0 0" x:Name="AutoSelectCheckbox" IsChecked="{Binding AutoSelectUpdates}">
+                <TextBlock>Automatically select important updates after an update search completes.</TextBlock>
+            </CheckBox>
+            <CheckBox Margin ="5 0 0 0" x:Name="AutoAcceptEulaCheckbox" IsChecked="{Binding AutoAcceptEulas}">
+                <TextBlock>Automatically accept the EULA of updates before download or install them.</TextBlock>
+            </CheckBox>
+        </StackPanel>
+    </Grid>
+</Window>
