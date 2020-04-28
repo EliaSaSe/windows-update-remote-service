@@ -172,9 +172,11 @@ For some integration tests, I used to use a VM to quickly reset to a state witho
 
 This is the first public release.
 
+In 2015, I investigated the ``WUApiLib`` and wrote a prototype. The most part of the solution was written in 2016 as a personal coding project. I added some small advancements in 2017 to fit my use cases better. In 2018, I removed the GUI-installer/MSI part from the solution, because the native support for such project types were removed from Visual Studio. For the public release in 2020, I added license informations. I also ensured that Visual Studio 2019 is able to build the project and upgraded to the SDK format.
+
 ## Meta
 
-Developed Elia Seikritt – git@seikritt.ch
+Developed by Elia Seikritt – git@seikritt.ch
 [https://github.com/yourname/github-link](https://github.com/dbader/)
 
 Distributed under the GNU Lesser General Public License. See ``COPYING`` and ``COPYING.LESSER`` for more information.
@@ -192,7 +194,7 @@ This project uses the following libraries:
 
 The project is not under active development. but I'm still using the software for some edge cases. I try to keep the project compatible with actual Visual Studio versions to be able to compile binaries as long as I'm using this software.  
 
-Currently there is no contribution guideline. If you are interested to contribute, raise an issue to let me know. I will then add such a guideline.
+Currently there is no contribution guideline. If you are interested in contribute, raise an issue to let me know. I will then add such a guideline.
 
 <!-- Markdown link & img dfn's -->
 [Apache log4net™ Manual - Configuration]: https://logging.apache.org/log4net/release/manual/configuration.html
