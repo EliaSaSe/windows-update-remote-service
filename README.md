@@ -3,7 +3,7 @@
 
 ## Why
 
-Years ago, I had to manage a lot of Windows servers. On a regular basis, there were a patch evenings. In spite of the availability of [WSUS] and group policies, it was complicated to automate the patch process for a multitude of reasons. For example:
+Years ago, I had to manage a lot of Windows servers. There were a patch evenings on a regular basis. In spite of the availability of [WSUS] and group policies, it was complicated to automate the patch process for a multitude of reasons. For example:
 
 * Some servers had to run shaky services, which depended on services on other hosts. When their dependencies were not available on startup or became unavailable later on in the patch window, they crashed. Thus, a strict patch sequence needed to be followed. 
 * A small license USB dongle prevented a bare metal Windows host from booting, so I had to coordinate the reboot of this specific host with the site manager. 
@@ -37,9 +37,9 @@ There were only expensive "Windows Update" management applications on the market
 
 ## Key concepts
 
-The projects consists of two parts, an agent that needs to be installed on the Windows servers you want to manage, and a [WPF] client application.
+The project consists of two parts, an agent that needs to be installed on the Windows servers you want to manage, and a [WPF] client application.
 
-The client can connect to agents and send commands like "search", "select update", "download", "install" and "reboot". The agent pushes progress and state changes back to all connected clients.
+The client can connect to agents and send commands like "search", "select update", "download", "install" and "reboot". The agent will push progress and state changes back to all connected clients.
 
 The agent uses the [Windows Update Agent API] provided by Microsoft to transmit the commands from the clients to Windows Update. **The agent itself does not do any search, download or installation of updates. This is all handled by the Windows Update service**. The advantage is, that there is no custom update routine which can damage the system. That also means that configurations for WSUS will be respected.
 
@@ -63,7 +63,7 @@ The solution is designed to be used in a classic Windows Active Directory enviro
 
 The communication between client and agent is realized with [WCF] over the tcp protocol. By default the communication is [encrypted and signed] at [transportation level] by using TLS.
 
-To authenticate connections between the client and the agents, Kerberos or NTLM authentication will be performed, depending on the host configuration. The client will be authenticated with the Windows user context, in which it is running. The agent rejects any user that does not have local administrator privileges on its host. This means that, to manage a group of servers, you need to run the client using an Active Directory user that has these permissions on all hosts that need to managed. This authorisation behavior is currently hardcoded.
+To authenticate connections between the client and the agents, Kerberos or NTLM authentication will be performed, depending on the host configuration. The client will be authenticated with the Windows user context, in which they is running. The agent rejects any user that does not have local administrator privileges on its host. This means that, to manage a group of servers, you need to run the client using an Active Directory user that has these permissions on all hosts that need to managed. This authorisation behavior is currently hardcoded.
 
 When UAC is turned on, you may need to start the client with elevated permissions to gain the administrator privileges.
 
@@ -128,7 +128,7 @@ To configure the log, visit [Apache log4net™ Manual - Configuration]. You shou
 
 #### Register service
 
-Here is an PowerShell example to register the agent as Windows service. The service will be executed with ``LocalSystem`` privileges.
+Here is a PowerShell example to register the agent as Windows service. The service will be executed with ``LocalSystem`` privileges.
 
 ```PowerShell
 PS> New-Service -Name 'WuRemoteService' -DisplayName "Windows Update Remote Service" -BinaryPathName '<Path to extracted WcfWuRemoteService.exe>' -StartupType Automatic
@@ -150,14 +150,14 @@ Please send me your "least privileges solution" if you come up with one. I will 
 
 ### Client
 
-Unpack the zip and copy the content to the desired location, then execute ``WcfWuRemoteClient.exe``. When you get "access denied" messages when conntecting to agents despite local administrator privileges on the target hosts, start the client with elevated privileges. 
+Unpack the zip and copy the content to the desired location, then execute ``WcfWuRemoteClient.exe``. When you get "access denied" messages while connecting to agents despite local administrator privileges on the target hosts, start the client with elevated privileges. 
 
 ## Getting started
 
 1. For your first steps on your local machine, just unpack the zip and start ``WcfWuRemoteClient.exe`` and ``WcfWuRemoteService.exe``. You need local administrator privileges and you may need to start the proccess with right click and "Run as administrator" for full elevated privileges.
-1. In the client application, click on "Add Host", the "Add Host" window appears. The pre-inserted URL ``net.tcp://localhost:8523/WuRemoteService`` should be fine, so just click on "Add".
-2. Select the connected host from the "Hostlist" and click "Search Updates". The agent is now requested to search for Windows updates.
-3. When the search completes, double click on the host in the hostlist to get details about the updates that have been found.
+2. In the client application, click on "Add Host", the "Add Host" window appears. The pre-inserted URL ``net.tcp://localhost:8523/WuRemoteService`` should be fine, so just click on "Add".
+3. Select the connected host from the "Hostlist" and click "Search Updates". The agent is now requested to search for Windows updates.
+4. When the search completes, double click on the host in the hostlist to get details about the updates that have been found.
 
 You should now see something like that: ![The client shows three found updates. In the background the agent runs in console mode.][usage-example-img]
 
@@ -167,8 +167,7 @@ Depending on the search result, you can now take other actions.
 
 I upgraded the origin solution built with Visual Studio 2015 to be compatible with Visual Studio 2019. I also migrated all contained projects to the new SDK format. You need to install "Windows Communication Foundation" and ".NET desktop development workload" with Visual Studio Installer. The solution uses MS Test as unit test framework.
 
-If you compile with DEBUG configuration, the agent uses ``WuApiMocks.WuApiSimulator``, which mimics basic behavior of 
-``WindowsUpdateApiController.WuApiController``. No changes to your OS are made, when you install the simulated updates. This allows independent development of the [WCF] (communication) and [WPF] (client) stuff. The DEBUG configuration also disables the "local administrator" autorisation check. So there is no need to run Visual Studio with local administrator privileges, while debugging the applications.
+If you compile with DEBUG configuration, the agent uses ``WuApiMocks.WuApiSimulator``, which mimics basic behavior of ``WindowsUpdateApiController.WuApiController``. No changes to your OS are made, when you install the simulated updates. This allows independent development of the [WCF] (communication) and [WPF] (client) stuff. The DEBUG configuration also disables the "local administrator" autorisation check. So there is no need to run Visual Studio with local administrator privileges, while debugging the applications.
 
 Developing the ``WindowsUpdateApiController.WuApiController`` can be very challenging, when you need some integration tests with the [Windows Update Agent API]. How to tell windows to fail an installation to see how ``WuApiController`` reacts?
 
@@ -183,7 +182,7 @@ In 2015, I investigated the ``WUApiLib`` and wrote a prototype. The biggest part
 ## Meta
 
 Developed by Elia Seikritt – git@seikritt.ch
-[https://github.com/yourname/github-link](https://github.com/dbader/)
+[https://github.com/EliaSaSe](https://github.com/EliaSaSe)
 
 Distributed under the GNU Lesser General Public License. See ``COPYING`` and ``COPYING.LESSER`` for more information.
 
@@ -198,7 +197,7 @@ This project uses the following libraries:
 
 ## Project status and Contributing
 
-The project is not under active development, but I'm still using the software for some edge cases. I try to keep the project compatible with current Visual Studio versions to be able to compile binaries as long as I'm using this software.  
+The project is not under active development, but I'm still using the software for some edge cases. I try to keep the project compatible with current Visual Studio versions to be able to compile binaries as long as I'm using this software.
 
 Currently there is no contribution guideline. If you are interested in contributing, raise an issue to let me know. I will then add such a guideline.
 
