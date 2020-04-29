@@ -1,19 +1,7 @@
 # Windows Update Remote Service
 > Control the Windows Update service on multiple servers with a single minimalistic GUI client.
 
-## Why
-
-Years ago, I had to manage a lot of Windows servers. There were patch evenings on a regular basis. In spite of the availability of [WSUS] and group policies, it was complicated to automate the patch process for a multitude of reasons. For example:
-
-* Some servers had to run shaky services, which depended on services on other hosts. When their dependencies were not available on startup or became unavailable later on in the patch window, they crashed. Thus, a strict patch sequence needed to be followed. 
-* A small license USB dongle prevented a bare metal Windows host from booting, so I had to coordinate the reboot of this specific host with the site manager. 
-* Some servers needed manual work from coworkers, before I was allowed to execute specific patch steps like installing updates or rebooting. 
-
-...and so on.
-
-I was tired of the many manual RDP logins to coordinate the dependencies between the "manual intervention" servers.
-
-There were only expensive "Windows Update" management applications on the market, with a lot of features I was not interested in. So I wrote my own small solution.
+![The client interface of the Windows Update Remote Service][head-img]
 
 - [Windows Update Remote Service](#windows-update-remote-service)
 	- [Why](#why)
@@ -34,6 +22,20 @@ There were only expensive "Windows Update" management applications on the market
 	- [Release history](#release-history)
 	- [Meta](#meta)
 	- [Project status and Contributing](#project-status-and-contributing)
+
+## Why
+
+Years ago, I had to manage a lot of Windows servers. There were patch evenings on a regular basis. In spite of the availability of [WSUS] and group policies, it was complicated to automate the patch process for a multitude of reasons. For example:
+
+* Some servers had to run shaky services, which depended on services on other hosts. When their dependencies were not available on startup or became unavailable later on in the patch window, they crashed. Thus, a strict patch sequence needed to be followed. 
+* A small license USB dongle prevented a bare metal Windows host from booting, so I had to coordinate the reboot of this specific host with the site manager. 
+* Some servers needed manual work from coworkers, before I was allowed to execute specific patch steps like installing updates or rebooting. 
+
+...and so on.
+
+I was tired of the many manual RDP logins to coordinate the dependencies between the "manual intervention" servers.
+
+There were only expensive "Windows Update" management applications on the market, with a lot of features I was not interested in. So I wrote my own small solution.
 
 ## Key concepts
 
@@ -216,5 +218,6 @@ Currently there is no contribution guideline. If you are interested in contribut
 [configure http.sys]: https://docs.microsoft.com/dotnet/framework/wcf/feature-details/configuring-http-and-https
 [DCOMCNFG]: https://docs.microsoft.com/cpp/atl/dcomcnfg?view=vs-2019
 [logon as a service]: https://docs.microsoft.com/previous-versions/windows/it-pro/windows-server-2012-R2-and-2012/dn221981(v=ws.11)
-[statemachine-img]: ./states.png
-[usage-example-img]: ./usage_example.png
+[statemachine-img]: ./Images/states.png
+[usage-example-img]: ./Images/usage_example.png
+[head-img]: ./Images/head.png
