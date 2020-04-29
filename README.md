@@ -3,9 +3,15 @@
 
 ## Why
 
-Years ago, I had to manage a lot of Windows servers. There were patch evenings on a regular basis. In spite of the availability of [WSUS] and group policies, it was complicated to automate the patch process for several reasons.
+Years ago, I had to manage a lot of Windows servers. There were patch evenings on a regular basis. In spite of the availability of [WSUS] and group policies, it was complicated to automate the patch process for a multitude of reasons. For example:
 
-Some servers had to run shaky services, which depended on services on other hosts. When the depended services were not available on startup or became unavailable later in the patch window, they crashed. A strict patch sequence needed to be followed. A lovely license USB dongle prevented a bare metal Windows host to startup, so I had to coordinate the reboot of the specific host with the site manager. Some servers needed manual work from coworkers, before I was allowed to execute specific patch steps like installing updates or rebooting. I was tired of the many manual RDP logins to coordinate the dependencies between the "manual intervention" servers.
+* Some servers had to run shaky services, which depended on services on other hosts. When their dependencies were not available on startup or became unavailable later on in the patch window, they crashed. Thus, a strict patch sequence needed to be followed. 
+* A small license USB dongle prevented a bare metal Windows host from booting, so I had to coordinate the reboot of this specific host with the site manager. 
+* Some servers needed manual work from coworkers, before I was allowed to execute specific patch steps like installing updates or rebooting. 
+
+...and so on.
+
+I was tired of the many manual RDP logins to coordinate the dependencies between the "manual intervention" servers.
 
 There were only expensive "Windows Update" management applications on the market, with a lot of features I was not interested in. So I wrote my own small solution.
 
@@ -31,41 +37,41 @@ There were only expensive "Windows Update" management applications on the market
 
 ## Key concepts
 
-The project consists of two parts, an agent that's needed to be installed on the Windows servers, and a [WPF] client application.
+The project consists of two parts, an agent that needs to be installed on the Windows servers you want to manage, and a [WPF] client application.
 
-The client can connect to agents and send commands like "search", "select update", "download", "install" and "reboot". The agents will push progress and state changes back to all connected clients.
+The client can connect to agents and send commands like "search", "select update", "download", "install" and "reboot". The agent will push progress and state changes back to all connected clients.
 
-The agent uses the [Windows Update Agent API] provided by Microsoft to transmit the commands from the clients to Windows Update. **The agent it self does not any search, download or installation of updates. This is all handled by the Windows Update service**. The advantage is, that there is no custom update routine which can damage the system. That also means that configurations for WSUS will be respected.
+The agent uses the [Windows Update Agent API] provided by Microsoft to transmit the commands from the clients to Windows Update. **The agent itself does not do any search, download or installation of updates. This is all handled by the Windows Update service**. The advantage is, that there is no custom update routine which can damage the system. That also means that configurations for WSUS will be respected.
 
-Regardless of changes in Microsoft's update policy with newer OS versions, the [Windows Update Agent API] seems to be stable for the last years.
+Regardless of changes in Microsoft's update policy with newer OS versions, the [Windows Update Agent API] seems to have been stable for the last couple of years.
 
 ### Windows Update session
 
-When the agent starts, it creates an [update session] to communicate with Windows Update. Operations in an update session are isolated from operations in other update session. The Windows Update menu of the control panel uses it's own update session. That means, that the activity of the agent is not shown in the Windows Update menu of the control panel. Nevertheless, Windows Updates handles concurrency. Only one session at time is able to install updates. The agent reacts to such situations and reports that the commanded operation is not possible due to activities of other sessions. Updates that are downloaded by other sessions will not be redownloaded, all sessions are using the same "update storage".
+When the agent starts, it creates an [update session] to communicate with Windows Update. Operations in one update session are isolated from operations in other update sessions. For example the Windows Update menu of the control panel uses it's own update session. Thereby the activity of the agent is not shown in the Windows Update menu of the control panel. Nevertheless, Windows Update handles concurrent sessions correctly. Only one session at time is able to install updates. The agent reacts to such situations and reports that the requested operation is not possible due activity of other sessions. Updates that are downloaded by other sessions will not be downloaded again, all sessions use the same "update storage".
 
 ### State machine
 
-The [Windows Update Agent API] protects the agent from doing invalid actions but also needs to be interfaced correctly. The agent manages an internal state machine to implement a valid patch flow. The client can use commands to transit the state. Invalid transitions will be rejected. Some transitions occur automatically based on events in the Windows Update session.
+The [Windows Update Agent API] protects the agent from doing invalid actions but also needs to be interfaced with correctly. The agent manages an internal state machine to implement a valid patch flow. The client can use commands to advance through the states. Invalid transitions will be rejected. Some transitions occur automatically based on events in the Windows Update session.
 
 ![Activity diagram that shows valid state transitions.][statemachine-img]
 
-Some transitions have preconditions, which are not shown in the diagram. E.g. to enter the "Downloading" state, there must be found and selected updates, which are not already downloaded. The client knows these rules and disables inappropriate commands for the user.
+Some transitions have preconditions, which are not shown in the diagram. E.g. to enter the "Downloading" state, there must be updates available, which are not already downloaded. The client knows these rules and disables inappropriate commands for the user.
 
 ### Communication, authentication and autorisation
 
 The solution is designed to be used in a classic Windows Active Directory environment.
 
-The communication between client and agent is realized with [WCF]. The tcp protocol is used. By default the communication is [encrypted and signed] at [transportation level] by using TLS.
+The communication between client and agent is realized with [WCF] over the tcp protocol. By default the communication is [encrypted and signed] at [transportation level] by using TLS.
 
-"Windows security" is used, depending of the host configuration, Kerberos or NTLM authentication will be performed. The client will be authenticated with the Windows user context, in which it is running. The agent rejects any user that does not have local administrator privileges on its host. So an Active Directory user with this permissions on all hosts that needs to be managed is required. This autorisation behavior is currently hardcoded.
+To authenticate connections between the client and the agents, Kerberos or NTLM authentication will be performed, depending on the host configuration. The client will be authenticated with the Windows user context, in which they is running. The agent rejects any user that does not have local administrator privileges on its host. This means that, to manage a group of servers, you need to run the client using an Active Directory user that has these permissions on all hosts that need to managed. This authorisation behavior is currently hardcoded.
 
-When UAC is turned on, you may need to start the client with evaluated permissions to gain the administrator privileges.
+When UAC is turned on, you may need to start the client with elevated permissions to gain the administrator privileges.
 
 ## Requirements
 
 > The solution is designed to be used in a classic Windows Active Directory environment.
 
-The agent is designed as long running process with a less footprint on the host system. While the agent itself does not consume many CPU cycles, remember that Windows Update can do, when an action is commanded.
+The agent is designed as long running process with a small footprint on the host system. While the agent itself does not consume a lot of CPU cycles, remember that Windows Update can and will use a considerable amount of ressources, when an action is requested.
 
 * Agent/Client: Windows Server 2008 R2 / Windows 7 up to Windows Server 2016 / Windows 10 and .NET Framework 4.5.2
 * Agent: Differences between desktop and core variants could not be observed
@@ -122,7 +128,7 @@ To configure the log, visit [Apache log4net™ Manual - Configuration]. You shou
 
 #### Register service
 
-Here is a PowerShell example to register the agent as Windows service. The service will be executed with ``LocalSystem``.
+Here is a PowerShell example to register the agent as Windows service. The service will be executed with ``LocalSystem`` privileges.
 
 ```PowerShell
 PS> New-Service -Name 'WuRemoteService' -DisplayName "Windows Update Remote Service" -BinaryPathName '<Path to extracted WcfWuRemoteService.exe>' -StartupType Automatic
@@ -133,46 +139,45 @@ To uninstall, execute ``sc.exe delete WuRemoteService`` and remove the files.
 
 #### Least privileges
 
-The agent was only tested with ``LocalSystem`` privileges. I never tried out the least privileges requirements. If you want to try, these are my suggestions to start with:
+The agent was only tested with ``LocalSystem`` privileges. I never tried out the least privilege requirements. If you want to try, these are my suggestions to start with:
 
-* Configure ``createFirewallRule`` with ``false``. This avoids the usage of COM interfaces ``FwCplLua`` and ``NetFwTypeLib`` to configure the Windows firewall
+* Set ``createFirewallRule`` to ``false``. This avoids the usage of COM interfaces ``FwCplLua`` and ``NetFwTypeLib`` to configure the Windows firewall.
 * To run a [WCF] application as non administrator, you must [configure http.sys] to grant binding permissions for the least privileged service user
-* The least privileged service user must be able to use the COM interface ``WUApiLib`` to interact with Windows Update. Maybe this can be done with [DCOMCNFG]
-* The least privileged service user may need the "[logon as a service]" right
+* The least privileged service user must be able to use the COM interface ``WUApiLib`` to interact with Windows Update. Maybe this can be done with [DCOMCNFG].
+* The least privileged service user may need the "[logon as a service]" right.
 
-I would be excited if you send me your "least privileges solution". I will then update this section with the results.
+Please send me your "least privileges solution" if you come up with one. I will then update this section with your results.
 
 ### Client
 
-Unpack the zip and copy the content to the desired location, then execute ``WcfWuRemoteClient.exe``. When you get "access denied" messages while connecting to agents despite local administrator privileges on the target hosts, start the client with evaluated privileges. 
+Unpack the zip and copy the content to the desired location, then execute ``WcfWuRemoteClient.exe``. When you get "access denied" messages while connecting to agents despite local administrator privileges on the target hosts, start the client with elevated privileges. 
 
 ## Getting started
 
-1. For a first entrance on your local machine, just unpack the zip and start ``WcfWuRemoteClient.exe`` and ``WcfWuRemoteService.exe``. You need local administrator privileges and you may need to start the proccess with right click and "Run as administrator" for full evaluated privileges.
-1. In the client application, click on "Add Host", the "Add Host" window appears. The pre-inserted URL ``net.tcp://localhost:8523/WuRemoteService`` should be fine, so just click on "Add".
-2. Select the connected host from the "Hostlist" and click "Search Updates". The agent is now commanded to search windows updates.
-3. When the search completes, double click on the host in the hostlist to get details about the found updates.
+1. For your first steps on your local machine, just unpack the zip and start ``WcfWuRemoteClient.exe`` and ``WcfWuRemoteService.exe``. You need local administrator privileges and you may need to start the proccess with right click and "Run as administrator" for full elevated privileges.
+2. In the client application, click on "Add Host", the "Add Host" window appears. The pre-inserted URL ``net.tcp://localhost:8523/WuRemoteService`` should be fine, so just click on "Add".
+3. Select the connected host from the "Hostlist" and click "Search Updates". The agent is now requested to search for Windows updates.
+4. When the search completes, double click on the host in the hostlist to get details about the updates that have been found.
 
-You should now see something like that: ![The client shows three found updates. In the background runs the agent in console mode.][usage-example-img]
+You should now see something like that: ![The client shows three found updates. In the background the agent runs in console mode.][usage-example-img]
 
 Depending on the search result, you can now take other actions.
 
 ## Development setup
 
-I upgraded the origin solution built with Visual Studio 2015 to be compatible with Visual Studio 2019. I also migrated all containing projects to the new SDK format. You need to install "Windows Communication Foundation" and ".NET desktop development workload" with Visual Studio Installer. The solution uses MS Test as unit test framework.
+I upgraded the origin solution built with Visual Studio 2015 to be compatible with Visual Studio 2019. I also migrated all contained projects to the new SDK format. You need to install "Windows Communication Foundation" and ".NET desktop development workload" with Visual Studio Installer. The solution uses MS Test as unit test framework.
 
-If you compile with DEBUG configuration, the agent uses ``WuApiMocks.WuApiSimulator``, which mimics basic behavior of 
-``WindowsUpdateApiController.WuApiController``. No changes to your OS are made, when you install the simulated updates. This allows independent development of the [WCF] (communication) and [WPF] (client) stuff. The DEBUG configuration also disables the "local administrator" autorisation check. So there is no need to run Visual Studio with local administrator privileges while debuging the solution.
+If you compile with DEBUG configuration, the agent uses ``WuApiMocks.WuApiSimulator``, which mimics basic behavior of ``WindowsUpdateApiController.WuApiController``. No changes to your OS are made, when you install the simulated updates. This allows independent development of the [WCF] (communication) and [WPF] (client) stuff. The DEBUG configuration also disables the "local administrator" autorisation check. So there is no need to run Visual Studio with local administrator privileges, while debugging the applications.
 
 Developing the ``WindowsUpdateApiController.WuApiController`` can be very challenging, when you need some integration tests with the [Windows Update Agent API]. How to tell windows to fail an installation to see how ``WuApiController`` reacts?
 
-For some integration tests, I used to use a VM to quickly reset to a state without patches. By limiting the disk space on the system drive while Windows Update expands/installs updates, is one way to provoke a failure. With [WSUS] you can better control which updates are presented to Windows Update.
+For some integration tests, I used a VM to quickly reset to a state without patches. Limiting the disk space on the system drive while Windows Update expands/installs updates, is one way to provoke a failure. With [WSUS] you can better control which updates are presented to Windows Update.
 
 ## Release history
 
 This is the first public release.
 
-In 2015, I investigated the ``WUApiLib`` and wrote a prototype. The most part of the solution was written in 2016 as a personal coding project. I added some small improvements in 2017 to fit my use cases better. In 2018, I removed the GUI-installer/MSI part from the solution, because the native support for such project types were removed from Visual Studio. For the public release in 2020, I added license informations. I also ensured that Visual Studio 2019 is able to build the project and upgraded to the SDK format.
+In 2015, I investigated the ``WUApiLib`` and wrote a prototype. The biggest part of the solution was written in 2016 as a personal coding project. I added some small enhancements in 2017 to fit my use cases better. In 2018, I removed the GUI-installer/MSI part from the solution, because the native support for such project types was removed from Visual Studio. For the public release in 2020, I added license informations. I also ensured that Visual Studio 2019 is able to build the project and upgraded to the new SDK format.
 
 ## Meta
 
@@ -192,9 +197,9 @@ This project uses the following libraries:
 
 ## Project status and Contributing
 
-The project is not under active development, but I'm still using the software for some edge cases. I try to keep the project compatible with actual Visual Studio versions to be able to compile binaries as long as I'm using this software.  
+The project is not under active development, but I'm still using the software for some edge cases. I try to keep the project compatible with current Visual Studio versions to be able to compile binaries as long as I'm using this software.
 
-Currently there is no contribution guideline. If you are interested in contribute, raise an issue to let me know. I will then add such a guideline.
+Currently there is no contribution guideline. If you are interested in contributing, raise an issue to let me know. I will then add such a guideline.
 
 <!-- Markdown link & img dfn's -->
 [Apache log4net™ Manual - Configuration]: https://logging.apache.org/log4net/release/manual/configuration.html
