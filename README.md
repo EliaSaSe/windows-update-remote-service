@@ -3,7 +3,7 @@
 
 ## Why
 
-Years ago, I had to manage a lot of Windows servers. There were a patch evenings on a regular basis. In spite of the availability of [WSUS] and group policies, it was complicated to automate the patch process for a multitude of reasons. For example:
+Years ago, I had to manage a lot of Windows servers. There were patch evenings on a regular basis. In spite of the availability of [WSUS] and group policies, it was complicated to automate the patch process for a multitude of reasons. For example:
 
 * Some servers had to run shaky services, which depended on services on other hosts. When their dependencies were not available on startup or became unavailable later on in the patch window, they crashed. Thus, a strict patch sequence needed to be followed. 
 * A small license USB dongle prevented a bare metal Windows host from booting, so I had to coordinate the reboot of this specific host with the site manager. 
@@ -144,7 +144,7 @@ The agent was only tested with ``LocalSystem`` privileges. I never tried out the
 * Set ``createFirewallRule`` to ``false``. This avoids the usage of COM interfaces ``FwCplLua`` and ``NetFwTypeLib`` to configure the Windows firewall.
 * To run a [WCF] application as non administrator, you must [configure http.sys] to grant binding permissions for the least privileged service user
 * The least privileged service user must be able to use the COM interface ``WUApiLib`` to interact with Windows Update. Maybe this can be done with [DCOMCNFG].
-* The least privileged service user may need the "[logon as a service]" right
+* The least privileged service user may need the "[logon as a service]" right.
 
 Please send me your "least privileges solution" if you come up with one. I will then update this section with your results.
 
