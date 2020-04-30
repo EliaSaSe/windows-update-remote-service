@@ -45,7 +45,9 @@ namespace WcfWuRemoteClientUnitTest
 
             var service = new WuRemoteService(factory.Object, new OperationContextProvider(), new WuApiConfigProvider());
             _hosting = new ServiceHost(service);
-            _hosting.AddServiceEndpoint(typeof(IWuRemoteService), new NetTcpBinding(), "net.tcp://0.0.0.0:8523/WuRemoteService");
+            // Sometimes multiple runs of the same unit tests fails, because 'net.tcp://0.0.0.0:8523/WuRemoteService' was already in use.
+            // Add guid to get a unique binding address for each unit test run.
+            _hosting.AddServiceEndpoint(typeof(IWuRemoteService), new NetTcpBinding(), $"net.tcp://0.0.0.0:8523/WuRemoteService/{Guid.NewGuid().ToString("n")}");
             _hosting.Open();
             if (!(_hosting.State == CommunicationState.Created || _hosting.State == CommunicationState.Opened)) throw new Exception($"Can not setup {nameof(WuRemoteService)} to run client tests.");
         }
