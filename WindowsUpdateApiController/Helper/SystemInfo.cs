@@ -20,6 +20,7 @@ using System;
 using System.IO;
 using System.Net;
 using System.Net.NetworkInformation;
+using System.Runtime.InteropServices;
 using WUApiLib;
 
 namespace WindowsUpdateApiController.Helper
@@ -83,6 +84,13 @@ namespace WindowsUpdateApiController.Helper
         }
 
         /// <summary>
+        /// Use this method (UINT64) instead of <see cref="Environment.TickCount"/> (INT32) 
+        /// to prevent integer overflow on long running servers.
+        /// </summary>
+        [DllImport("kernel32")]
+        private extern static UInt64 GetTickCount64();
+
+        /// <summary>
         /// FQDN of the hostsystem.
         /// </summary>
         public string GetFQDN()
@@ -112,7 +120,7 @@ namespace WindowsUpdateApiController.Helper
         /// <summary>
         /// Time elapsed since the system started.
         /// </summary>
-        public TimeSpan GetUptime() => TimeSpan.FromMilliseconds(Environment.TickCount);
+        public TimeSpan GetUptime() => TimeSpan.FromMilliseconds(GetTickCount64());
 
         /// <summary>
         /// The used update server.
