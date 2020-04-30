@@ -30,7 +30,7 @@ namespace WcfWuRemoteClient.Converter
         {
             Debug.Assert(value is bool);
             Debug.Assert(targetType == typeof(ImageSource));
-            return new BitmapImage(new Uri($"/Images/{((bool)value? "StatusOK":"StatusCriticalError")}.ico", UriKind.RelativeOrAbsolute));
+            return new BitmapImage(new Uri($"/Images/{((bool)value? "StatusOK":"StatusError")}.png", UriKind.RelativeOrAbsolute));
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

@@ -31,8 +31,8 @@ namespace WcfWuRemoteClient.Converter
         {
             WuRemoteCallResult result = value as WuRemoteCallResult;
             Debug.Assert(targetType == typeof(ImageSource));
-            string iconName = result == null ? "StatusRun" : result.Success ? "StatusOK" : "StatusCriticalError";
-            return new BitmapImage(new Uri($"/Images/{iconName}.ico", UriKind.RelativeOrAbsolute));
+            string iconName = result == null ? "StatusRun" : result.Success ? "StatusOK" : "StatusError";
+            return new BitmapImage(new Uri($"/Images/{iconName}.png", UriKind.RelativeOrAbsolute));
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

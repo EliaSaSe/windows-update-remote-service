@@ -7,7 +7,7 @@
         xmlns:viewModels="clr-namespace:WcfWuRemoteClient.ViewModels"
         xmlns:converter="clr-namespace:WcfWuRemoteClient.Converter"
         mc:Ignorable="d"
-        Title="Windows Update Remote Client" Height="400" Width="700" Icon="/WcfWuRemoteClient;component/AUTOMATIC UPDATES.ico">
+        Title="Windows Update Remote Client" Height="400" Width="700" Icon="/WcfWuRemoteClient;component/AppIcon.ico">
     <Window.Resources>
         <converter:StateProgressToStringConverter x:Key="StateProgressToStringConverter" />
         <converter:CallResultToStringConverter x:Key="CallResultToStringConverter" />
@@ -15,7 +15,7 @@
         <converter:BytesToHumanReadableConverter x:Key="BytesToHumanReadableConverter" />
         <converter:VisibilityToBoolConverter x:Key="VisibilityToBoolConverter" />
         <converter:UpdateDescArrayToStatsStringConverter x:Key="UpdateDescToStatsConverter" />
-        <BitmapImage x:Key="TaskIcon" UriSource="/Images/Task.ico" />
+        <BitmapImage x:Key="TaskIcon" UriSource="/Images/Task.png" />
         <CollectionViewSource Source="{Binding CommandHistoryFiltered, UpdateSourceTrigger=PropertyChanged}" x:Name="cvs" x:Key="cvs" IsLiveFilteringRequested="True" />
     </Window.Resources>
     <Window.CommandBindings>

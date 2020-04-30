@@ -7,7 +7,7 @@
         xmlns:converter="clr-namespace:WcfWuRemoteClient.Converter"
         mc:Ignorable="d"
         xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
-        Title="Applicable Updates" Height="400" Width="700" Icon="/WcfWuRemoteClient;component/AUTOMATIC UPDATES.ico">
+        Title="Applicable Updates" Height="400" Width="700" Icon="/WcfWuRemoteClient;component/AppIcon.ico">
     <Window.Resources>
         <converter:BytesToHumanReadableConverter x:Key="BytesToHumanReadableConverter" />
         <converter:BooleanInversionConverter x:Key="BooleanInversionConverter" />

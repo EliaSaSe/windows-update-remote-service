@@ -76,7 +76,7 @@ namespace WcfWuRemoteClient.ViewModels
         /// <summary>
         /// Path to an icon which represents the current <see cref="FilterCommandHistory"/> state.
         /// </summary>
-        public string FilterCommandHistoryIcon => (FilterCommandHistory) ? "/Images/DeleteFilter.png" : "/Images/Filter.ico";
+        public string FilterCommandHistoryIcon => (FilterCommandHistory) ? "/Images/DeleteFilter.png" : "/Images/Filter.png";
 
         /// <summary>
         /// List of managed endpoints.

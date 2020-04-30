@@ -183,18 +183,18 @@ In 2015, I investigated the ``WUApiLib`` and wrote a prototype. The biggest part
 
 ## Meta
 
-Developed by Elia Seikritt – git@seikritt.ch
+Developed by Elia Seikritt – git@seikritt.ch,
 [https://github.com/EliaSaSe](https://github.com/EliaSaSe)
 
-Distributed under the GNU Lesser General Public License. See ``COPYING`` and ``COPYING.LESSER`` for more information.
-
 The preferred method of communication is via GitHub.
+
+Distributed under the GNU Lesser General Public License. See ``COPYING`` and ``COPYING.LESSER`` for more information.
 
 This project uses the following libraries:
 
 * [log4net](https://logging.apache.org/log4net/), Copyright 2004-2017 The Apache Software Foundation, [Apache License, Version 2.0 License](http://www.apache.org/licenses/LICENSE-2.0)
 * [moq](https://github.com/moq/moq), Copyright (c) 2017 Daniel Cazzulino and Contributors, [MIT License](https://github.com/moq/moq/blob/master/LICENSE)
-* [Visual Studio 2015 Image Library](https://www.microsoft.com/en-us/download/details.aspx?id=35825), Copyright (c) Microsoft Corporation, [MICROSOFT SOFTWARE LICENSE TERMS](http://download.microsoft.com/download/0/6/0/0607D8EA-9BB7-440B-A36A-A24EB8C9C67E/Visual%20Studio%202015%20Image%20Library%20EULA.docx)
+* [Feather](https://feathericons.com), Copyright (c) 2013-2017 Cole Bemis, [MIT License](https://github.com/feathericons/feather/blob/master/LICENSE)
 * [WCF -- Windows Communication Foundation Client Libraries](https://github.com/dotnet/wcf), Copyright (c) .NET Foundation and Contributors, [MIT Licence](https://github.com/dotnet/wcf/blob/master/LICENSE.TXT)
 
 ## Project status and Contributing
