@@ -27,7 +27,7 @@
 
 Years ago, I had to manage a lot of Windows servers. There were patch evenings on a regular basis. In spite of the availability of [WSUS] and group policies, it was complicated to automate the patch process for a multitude of reasons. For example:
 
-* Some servers had to run shaky services, which depended on services on other hosts. When their dependencies were not available on startup or became unavailable later on in the patch window, they crashed. Thus, a strict patch sequence needed to be followed. 
+* Some servers had to run shaky services, which depended on services on other hosts. When their dependencies were not available on startup or became unavailable later in the patch window, they crashed. Thus, a strict patch sequence needed to be followed. 
 * A small license USB dongle prevented a bare metal Windows host from booting, so I had to coordinate the reboot of this specific host with the site manager. 
 * Some servers needed manual work from coworkers, before I was allowed to execute specific patch steps like installing updates or rebooting. 
 
@@ -49,11 +49,11 @@ Regardless of changes in Microsoft's update policy with newer OS versions, the [
 
 ### Windows Update session
 
-When the agent starts, it creates an [update session] to communicate with Windows Update. Operations in one update session are isolated from operations in other update sessions. For example the Windows Update menu of the control panel uses it's own update session. Thereby the activity of the agent is not shown in the Windows Update menu of the control panel. Nevertheless, Windows Update handles concurrent sessions correctly. Only one session at time is able to install updates. The agent reacts to such situations and reports that the requested operation is not possible due activity of other sessions. Updates that are downloaded by other sessions will not be downloaded again, all sessions use the same "update storage".
+When the agent starts, it creates an [update session] to communicate with Windows Update. Operations in one update session are isolated from operations in other update sessions. For example, the Windows Update menu of the control panel uses it's own update session. Thereby, the activity of the agent is not shown in the Windows Update menu of the control panel. Nevertheless, Windows Update handles concurrent sessions correctly. Only one session at time is able to install updates. The agent reacts to such situations and reports that the requested operation is not possible due activity of other sessions. Updates, that are downloaded by other sessions, will not be downloaded again, all sessions use the same "update storage".
 
 ### State machine
 
-The [Windows Update Agent API] protects the agent from doing invalid actions but also needs to be interfaced with correctly. The agent manages an internal state machine to implement a valid patch flow. The client can use commands to advance through the states. Invalid transitions will be rejected. Some transitions occur automatically based on events in the Windows Update session.
+The [Windows Update Agent API] protects the agent from doing invalid actions, but also needs to be interfaced correctly. The agent manages an internal state machine to implement a valid patch flow. The client can use commands to advance through the states. Invalid transitions will be rejected. Some transitions occur automatically based on events in the Windows Update session.
 
 ![Activity diagram that shows valid state transitions.][statemachine-img]
 
@@ -65,7 +65,7 @@ The solution is designed to be used in a classic Windows Active Directory enviro
 
 The communication between client and agent is realized with [WCF] over the tcp protocol. By default the communication is [encrypted and signed] at [transportation level] by using TLS.
 
-To authenticate connections between the client and the agents, Kerberos or NTLM authentication will be performed, depending on the host configuration. The client will be authenticated with the Windows user context, in which they is running. The agent rejects any user that does not have local administrator privileges on its host. This means that, to manage a group of servers, you need to run the client using an Active Directory user that has these permissions on all hosts that need to managed. This authorisation behavior is currently hardcoded.
+To authenticate connections between the client and the agents, Kerberos or NTLM authentication will be performed, depending on the host configuration. The client will be authenticated with the Windows user context, in which it is running. The agent rejects any user that does not have local administrator privileges on its host. This means, to manage a group of servers, you need to run the client, using an Active Directory user that has these permissions on all managed hosts. This authorisation behavior is currently hardcoded.
 
 When UAC is turned on, you may need to start the client with elevated permissions to gain the administrator privileges.
 
@@ -144,15 +144,15 @@ To uninstall, execute ``sc.exe delete WuRemoteService`` and remove the files.
 The agent was only tested with ``LocalSystem`` privileges. I never tried out the least privilege requirements. If you want to try, these are my suggestions to start with:
 
 * Set ``createFirewallRule`` to ``false``. This avoids the usage of COM interfaces ``FwCplLua`` and ``NetFwTypeLib`` to configure the Windows firewall.
-* To run a [WCF] application as non administrator, you must [configure http.sys] to grant binding permissions for the least privileged service user
+* To run a [WCF] application as non administrator, you must [configure http.sys] to grant binding permissions for the least privileged service user.
 * The least privileged service user must be able to use the COM interface ``WUApiLib`` to interact with Windows Update. Maybe this can be done with [DCOMCNFG].
 * The least privileged service user may need the "[logon as a service]" right.
 
-Please send me your "least privileges solution" if you come up with one. I will then update this section with your results.
+Please send me your "least privileges solution" if you come up with one. I will update this section with your results.
 
 ### Client
 
-Unpack the zip and copy the content to the desired location, then execute ``WcfWuRemoteClient.exe``. When you get "access denied" messages while connecting to agents despite local administrator privileges on the target hosts, start the client with elevated privileges. 
+Unpack the zip and copy the content to the desired location, then execute ``WcfWuRemoteClient.exe``. When you get "access denied" messages while connecting to agents, despite local administrator privileges on the target hosts, start the client with elevated privileges. 
 
 ## Getting started
 
@@ -173,7 +173,7 @@ If you compile with DEBUG configuration, the agent uses ``WuApiMocks.WuApiSimula
 
 Developing the ``WindowsUpdateApiController.WuApiController`` can be very challenging, when you need some integration tests with the [Windows Update Agent API]. How to tell windows to fail an installation to see how ``WuApiController`` reacts?
 
-For some integration tests, I used a VM to quickly reset to a state without patches. Limiting the disk space on the system drive while Windows Update expands/installs updates, is one way to provoke a failure. With [WSUS] you can better control which updates are presented to Windows Update.
+For some integration tests, I used a VM to quickly reset to a state without patches. Limiting the disk space on the system drive while Windows Update expands/installs updates, is one way to provoke a failure. With [WSUS] you can better control, which updates are presented to Windows Update.
 
 ## Release history
 
