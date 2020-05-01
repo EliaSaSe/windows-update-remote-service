@@ -22,6 +22,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
+using CCSWE.Collections.ObjectModel;
 using WcfWuRemoteClient.Models;
 
 namespace WcfWuRemoteClient.Commands.Calls
@@ -29,9 +30,11 @@ namespace WcfWuRemoteClient.Commands.Calls
     /// <summary>
     /// Reperesents a list of <see cref="WuRemoteCallContext"/>.
     /// </summary>
-    class WuRemoteCallHistory : INotifyCollectionChanged, INotifyPropertyChanged, ICollection<WuRemoteCallContext>, IReadOnlyCollection<WuRemoteCallContext>
+    class WuRemoteCallHistory : INotifyCollectionChanged, INotifyPropertyChanged, 
+        ICollection<WuRemoteCallContext>, IReadOnlyCollection<WuRemoteCallContext>
     {
-        readonly AsyncObservableCollection<WuRemoteCallContext> _callHistory = new AsyncObservableCollection<WuRemoteCallContext>();
+        readonly SynchronizedObservableCollection<WuRemoteCallContext> _callHistory 
+            = new SynchronizedObservableCollection<WuRemoteCallContext>();
 
         public WuRemoteCallHistory()
         {
@@ -40,7 +43,8 @@ namespace WcfWuRemoteClient.Commands.Calls
 
         PropertyChangedEventHandler PropChangedHandler => (sender, e) => PropertyChanged?.Invoke(this, e);
 
-        public void Add(WuRemoteCall call, IWuEndpoint endpoint, Task<WuRemoteCallResult> task) => Add(new WuRemoteCallContext(call, endpoint, task));
+        public void Add(WuRemoteCall call, IWuEndpoint endpoint, Task<WuRemoteCallResult> task) 
+            => Add(new WuRemoteCallContext(call, endpoint, task));
 
         #region ICollection<WuRemoteCallContext>
 

@@ -20,6 +20,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+using CCSWE.Collections.ObjectModel;
 
 namespace WcfWuRemoteClient.Models
 {
@@ -28,9 +29,9 @@ namespace WcfWuRemoteClient.Models
     /// </summary>
     public class WuEndpointCollection : INotifyCollectionChanged, ICollection<IWuEndpoint>, IReadOnlyCollection<IWuEndpoint>
     {
-        private readonly AsyncObservableCollection<IWuEndpoint> _endpoints = new AsyncObservableCollection<IWuEndpoint>(); // thread safe
+        private readonly SynchronizedObservableCollection<IWuEndpoint> _endpoints = 
+            new SynchronizedObservableCollection<IWuEndpoint>();
         public event NotifyCollectionChangedEventHandler CollectionChanged;
-        private static readonly log4net.ILog Log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
         public WuEndpointCollection()
         {
@@ -41,7 +42,8 @@ namespace WcfWuRemoteClient.Models
         {
             if (items == null) throw new ArgumentNullException(nameof(items));
             var distinct = items.Where(e => !_endpoints.Contains(e)).ToList();
-            //EndpointCollection.AddRange(distinct); Buggy? -> A read lock may not be acquired with the write lock held in this mode.
+            // EndpointCollection.AddRange(distinct); Buggy? 
+            // A read lock may not be acquired with the write lock held in this mode.
             foreach (var endpoint in distinct)
             {
                 Add(endpoint);
@@ -51,7 +53,8 @@ namespace WcfWuRemoteClient.Models
         public void RemoveAndDisposeRange(IEnumerable<IWuEndpoint> endpoints)
         {
             if (endpoints == null) throw new ArgumentNullException(nameof(endpoints));
-            // To prevent a InvalidOperationException like "Collection was modified; enumeration operation may not execute." in any case,
+            // To prevent a InvalidOperationException like "Collection was modified; 
+            // enumeration operation may not execute.",
             // create a separate enumeration to allow to remove items from the endpoint list.
             endpoints = endpoints.ToList();
             foreach (var endpoint in endpoints)

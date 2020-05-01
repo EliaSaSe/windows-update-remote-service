@@ -37,7 +37,7 @@ namespace WcfWuRemoteClientUnitTest
         static ServiceHost _hosting;
 
         [ClassInitialize]
-        public static void ClassSetup(TestContext context)
+        public static void ClassSetup()
         {
             var simulator = new WuApiSimulator().SetSearchTime(1).SetDownloadTime(1).SetInstallTime(1).Configure();
             var factory = new Mock<WuApiControllerFactory>();

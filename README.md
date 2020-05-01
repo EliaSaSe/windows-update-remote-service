@@ -197,6 +197,7 @@ This project uses the following libraries:
 * [Feather](https://feathericons.com), Copyright (c) 2013-2017 Cole Bemis, [MIT License](https://github.com/feathericons/feather/blob/master/LICENSE)
 * [WCF -- Windows Communication Foundation Client Libraries](https://github.com/dotnet/wcf), Copyright (c) .NET Foundation and Contributors, [MIT Licence](https://github.com/dotnet/wcf/blob/master/LICENSE.TXT)
 * [Microsoft Test Framework "MSTest V2"](https://github.com/microsoft/testfx), Copyright (c) Microsoft Corporation. All rights reserved, [MIT Licence](https://github.com/microsoft/testfx/blob/master/LICENSE.txt)
+* [CCSWE.Core](https://github.com/CoryCharlton/CCSWE.Core), Copyright 2015 Cory Charlton, [Apache License, Version 2.0 License](http://www.apache.org/licenses/LICENSE-2.0)
 
 ## Project status and Contributing
 
