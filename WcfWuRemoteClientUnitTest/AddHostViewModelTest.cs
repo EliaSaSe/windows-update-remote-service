@@ -34,20 +34,21 @@ namespace WcfWuRemoteClientUnitTest
     [TestClass]
     public class AddHostViewModelTest
     {
-        static ServiceHost _hosting;
+        private static ServiceHost _hosting;
 
         [ClassInitialize]
-        public static void ClassSetup()
+        public static void ClassSetup(TestContext context)
         {
-            var simulator = new WuApiSimulator().SetSearchTime(1).SetDownloadTime(1).SetInstallTime(1).Configure();
+            _ = context; // The MSTest expects this parameter to be present. But it's not needed.
+            
+            var simulator = new WuApiSimulator().SetSearchTime(1).SetDownloadTime(1)
+                .SetInstallTime(1).Configure();
             var factory = new Mock<WuApiControllerFactory>();
             factory.Setup(f => f.GetController()).Returns(new WuApiController(simulator.UpdateSession, simulator.UpdateCollectionFactory, CommonMocks.GetSystemInfo()));
 
             var service = new WuRemoteService(factory.Object, new OperationContextProvider(), new WuApiConfigProvider());
             _hosting = new ServiceHost(service);
-            // Sometimes multiple runs of the same unit tests fails, because 'net.tcp://0.0.0.0:8523/WuRemoteService' was already in use.
-            // Add guid to get a unique binding address for each unit test run.
-            _hosting.AddServiceEndpoint(typeof(IWuRemoteService), new NetTcpBinding(), $"net.tcp://0.0.0.0:8523/WuRemoteService/{Guid.NewGuid().ToString("n")}");
+            _hosting.AddServiceEndpoint(typeof(IWuRemoteService), new NetTcpBinding(), $"net.tcp://0.0.0.0:8523/WuRemoteService");
             _hosting.Open();
             if (!(_hosting.State == CommunicationState.Created || _hosting.State == CommunicationState.Opened)) throw new Exception($"Can not setup {nameof(WuRemoteService)} to run client tests.");
         }
@@ -56,8 +57,8 @@ namespace WcfWuRemoteClientUnitTest
         public static void ClassCleanup()
         {
             _hosting?.Close();
+            _hosting = null;
         }
-
 
         /// <summary>
         /// Waits for the Task to complete execution within a specified number of milliseconds. Re-throws thrown expections in the task.
