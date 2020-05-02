@@ -14,15 +14,14 @@ namespace WcfWuRemoteClient.Models
         protected static readonly log4net.ILog Log = log4net.LogManager.GetLogger(
             System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
+        public WuEndpointFactory()
+        {
+            _wuRemoteServiceFactory = new WuRemoteServiceFactory();
+        }
+
         public WuEndpointFactory(WuRemoteServiceFactory wuRemoteServiceFactory = null)
         {
             _wuRemoteServiceFactory = wuRemoteServiceFactory ?? new WuRemoteServiceFactory();
-        }
-
-        virtual public IWuEndpoint GetInstance(IWuRemoteService service,
-            Binding binding, EndpointAddress address)
-        {
-            return new WuEndpoint(_wuRemoteServiceFactory, binding, address);
         }
 
         /// <summary>
@@ -37,7 +36,7 @@ namespace WcfWuRemoteClient.Models
         /// Contains <see cref="CommunicationException"/> when the connect try failed.
         /// </param>
         /// <returns>True, when the connect was successfull. False if not, then <paramref name="exception"/> contains more details.</returns>
-        virtual public bool TryCreateWuEndpoint(Binding binding, EndpointAddress remoteAddress, out WuEndpoint endpoint, out Exception exception)
+        virtual public bool TryCreateWuEndpoint(Binding binding, EndpointAddress remoteAddress, out IWuEndpoint endpoint, out Exception exception)
         {
             if (binding == null) throw new ArgumentNullException(nameof(binding));
             if (remoteAddress == null) throw new ArgumentNullException(nameof(remoteAddress));
@@ -50,7 +49,7 @@ namespace WcfWuRemoteClient.Models
                 try
                 {
                     endpoint.Service.GetFQDN(); // Call arbitrary to verfiy that the service does not deny the usage.
-                    endpoint.EagerLoad();
+                    (endpoint as WuEndpoint).EagerLoad();
                 }
                 catch (System.ServiceModel.Security.SecurityAccessDeniedException e)
                 {

@@ -18,14 +18,13 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Moq" Version="4.7.63" />
+    <PackageReference Include="Moq" Version="4.14.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.6.1" />
     <PackageReference Include="MSTest.TestAdapter" Version="2.1.1" />
     <PackageReference Include="MSTest.TestFramework" Version="2.1.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\WcfWuRemoteClient\WcfWuRemoteClient.csproj" />
-    <ProjectReference Include="..\WcfWuRemoteService\WcfWuRemoteService.csproj" />
     <ProjectReference Include="..\WindowsUpdateApiController\WindowsUpdateApiController.csproj" />
     <ProjectReference Include="..\WuApiMocks\WuApiMocks.csproj" />
     <ProjectReference Include="..\WuDataContract\WuDataContract.csproj" />

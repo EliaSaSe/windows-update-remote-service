@@ -280,13 +280,6 @@ namespace WcfWuRemoteClient.Models
             _binding = binding ?? throw new ArgumentNullException(nameof(binding));
             _address = address ?? throw new ArgumentNullException(nameof(address));
 
-            var channel = ((IChannel)Service);
-            channel.Faulted += (s, e) => { OnPropertyChanged("ConnectionState"); };
-            channel.Closed += (s, e) => { OnPropertyChanged("ConnectionState"); };
-            channel.Closing += (s, e) => { OnPropertyChanged("ConnectionState"); };
-            channel.Opened += (s, e) => { OnPropertyChanged("ConnectionState"); };
-            channel.Opening += (s, e) => { OnPropertyChanged("ConnectionState"); };
-
             IsDisposed = false;
         }
 
@@ -440,9 +433,15 @@ namespace WcfWuRemoteClient.Models
                 if (!(service is IChannel)) throw new InvalidOperationException(
                     $"{nameof(service)} must implement interface {nameof(IChannel)}.");
 
-
                 if (service != null)
                 {
+                    var channel = ((IChannel)service);
+                    channel.Faulted += (s, e) => { OnPropertyChanged("ConnectionState"); };
+                    channel.Closed += (s, e) => { OnPropertyChanged("ConnectionState"); };
+                    channel.Closing += (s, e) => { OnPropertyChanged("ConnectionState"); };
+                    channel.Opened += (s, e) => { OnPropertyChanged("ConnectionState"); };
+                    channel.Opening += (s, e) => { OnPropertyChanged("ConnectionState"); };
+
                     _callbackReceiver = callbackReceiver;
                     _callbackReceiver.Endpoint = this;
                     Service = service;

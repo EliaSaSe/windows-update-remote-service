@@ -64,7 +64,7 @@ namespace WcfWuRemoteClient.ViewModels
                     var remoteAddr = new EndpointAddress(uri.ToString());
                     var binding = new NetTcpBinding();
                     if (endpointFactory.TryCreateWuEndpoint(binding, remoteAddr, 
-                        out WuEndpoint endpoint, out Exception exception))
+                        out IWuEndpoint endpoint, out Exception exception))
                     {
                         Debug.Assert(exception == null || exception is EndpointNeedsUpgradeException);
                         return new AddHostViewModel(uri.ToString(), true, exception, endpoint);
