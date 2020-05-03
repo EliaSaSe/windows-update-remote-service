@@ -63,9 +63,9 @@ namespace WcfWuRemoteServiceUnitTest
             thread2.Start();
             thread3.Start();
 
-            Assert.IsTrue(thread1.Join(2000), "Thread is blocked.");
-            Assert.IsTrue(thread2.Join(2000), "Thread is blocked.");
-            Assert.IsTrue(thread3.Join(2000), "Thread is blocked.");
+            Assert.IsTrue(thread1.Join(20000), "Thread is blocked.");
+            Assert.IsTrue(thread2.Join(20000), "Thread is blocked.");
+            Assert.IsTrue(thread3.Join(20000), "Thread is blocked.");
             Assert.AreEqual(101, count);
         }
     }

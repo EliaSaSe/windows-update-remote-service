@@ -1,0 +1,35 @@
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup .net framework env
+        uses: vrnobody/Setup-DotNetFrameworkEnv@v1
+
+      - name: Restore Nuget packages
+        run: nuget restore WindowsUpdateControlService.sln
+
+      - name: Build solution
+        run: msbuild WindowsUpdateControlService.sln -p:Configuration=Release
+
+      - name: Run unit tests
+        run: |
+          function Invoke-VSTest {
+          param(
+            [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)] 
+            [string]$args
+          )
+          Process {
+            & "vstest.console.exe" $args
+            if(-not $?){ throw "fail!" }
+           }
+          }
+          Get-Childitem -Directory -Recurse | ? { $_.FullName -like '*\bin\Release' } | Get-ChildItem -Recurse -File -Filter *UnitTest.dll | Invoke-VSTest
