@@ -173,6 +173,5 @@ namespace WcfWuRemoteClientUnitTest
                 Assert.Fail("Property changed event is missing.");
             }
         }
-
     }
 }

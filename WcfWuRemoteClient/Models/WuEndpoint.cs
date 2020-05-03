@@ -38,8 +38,9 @@ namespace WcfWuRemoteClient.Models
         private static readonly log4net.ILog Log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
         CallbackReceiver _callbackReceiver;
-        Binding _binding;
-        EndpointAddress _address;
+        readonly Binding _binding;
+        readonly EndpointAddress _address;
+        readonly WuRemoteServiceFactory _serviceFactory;
 
         #region Properties
 
@@ -239,6 +240,10 @@ namespace WcfWuRemoteClient.Models
                 lock (ServiceLock)
                 {
                     ThrowIfDisposed();
+                    if (_service == null)
+                    {
+                        Connect();
+                    }
                     service = _service;
                 }
                 return service;
@@ -256,7 +261,7 @@ namespace WcfWuRemoteClient.Models
         public event PropertyChangedEventHandler PropertyChanged;
         protected virtual void OnPropertyChanged(string propertyName)
         {
-            Log.Debug($"{FQDN}: {nameof(OnPropertyChanged)}-Event for {propertyName}.");
+            Log.Debug($"{_fqdn}: {nameof(OnPropertyChanged)}-Event for {propertyName}.");
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
@@ -264,28 +269,16 @@ namespace WcfWuRemoteClient.Models
 
         #region Construct and Dispose
 
-        internal WuEndpoint(IWuRemoteService service, CallbackReceiver callbackReceiver, Binding binding, EndpointAddress address)
+        internal WuEndpoint(
+            WuRemoteServiceFactory serviceFactory,
+            Binding binding,
+            EndpointAddress address)
         {
-            if (service == null) throw new ArgumentNullException(nameof(service));
-            if (callbackReceiver == null) throw new ArgumentNullException(nameof(callbackReceiver));
-            if (binding == null) throw new ArgumentNullException(nameof(binding));
-            if (address == null) throw new ArgumentNullException(nameof(address));
-            if (!(service is IChannel)) throw new ArgumentException($"{nameof(service)} must implement interface {nameof(IChannel)}.", nameof(service));
+            Log.Debug($"Creating instance of {nameof(WuEndpoint)} for {nameof(EndpointAddress)} {address?.Uri}");
 
-            Log.Debug($"Creating instance of {nameof(WuEndpoint)} for {nameof(EndpointAddress)} {address.Uri}");
-
-            Service = service;
-            _callbackReceiver = callbackReceiver;
-            _callbackReceiver.Endpoint = this;
-            _binding = binding;
-            _address = address;
-
-            var channel = ((IChannel)Service);
-            channel.Faulted += (s, e) => { OnPropertyChanged("ConnectionState"); };
-            channel.Closed += (s, e) => { OnPropertyChanged("ConnectionState"); };
-            channel.Closing += (s, e) => { OnPropertyChanged("ConnectionState"); };
-            channel.Opened += (s, e) => { OnPropertyChanged("ConnectionState"); };
-            channel.Opening += (s, e) => { OnPropertyChanged("ConnectionState"); };
+            _serviceFactory = serviceFactory ?? throw new ArgumentNullException(nameof(serviceFactory));
+            _binding = binding ?? throw new ArgumentNullException(nameof(binding));
+            _address = address ?? throw new ArgumentNullException(nameof(address));
 
             IsDisposed = false;
         }
@@ -296,140 +289,22 @@ namespace WcfWuRemoteClient.Models
         /// The instances of this class are operational without calling this method.
         /// <see cref="EagerLoad"/> can be called multiple times.
         /// </summary>
-        private void EagerLoad()
+        internal void EagerLoad()
         {
             Log.Debug("Eager load properties.");
             // Call property getter to eager load value.
-            var fqdn = FQDN;
-            var version = ServiceVersion;
-            var state = State;
-            var settings = Settings;
-            var updates = Updates;
-        }
-
-        private static IWuRemoteService CreateChannel(Binding binding, EndpointAddress remoteAddress, CallbackReceiver callback)
-        {
-            if (binding == null) throw new ArgumentNullException(nameof(binding));
-            if (remoteAddress == null) throw new ArgumentNullException(nameof(remoteAddress));
-            if (callback == null) throw new ArgumentNullException(nameof(callback));
-
-            IWuRemoteService service = null;
-            DuplexChannelFactory<IWuRemoteService> channelFactory = null;
-
-            try
-            {
-                Log.Debug($"Creating channel for {remoteAddress.Uri}");
-                channelFactory = new DuplexChannelFactory<IWuRemoteService>(callback, binding, remoteAddress);
-                service = channelFactory.CreateChannel();
-                ((IChannel)service).Open();
-                Log.Debug($"{remoteAddress.Uri}: Register for callbacks.");
-                service.RegisterForCallback();
-            }
-            catch (EndpointNotFoundException e)
-            {
-                channelFactory?.Abort();
-                Log.Warn($"Could not create channel for {remoteAddress.Uri}", e);
-                throw new EndpointNotFoundException($"Could not connect to the remote host. Verify that the serivce is installed on the remote host and is not blocked by the firewall. {((e.InnerException != null) ? e.InnerException.Message : e.Message) }", e);
-            }
-            catch (Exception e)
-            {
-                Log.Warn($"Could not create channel for {remoteAddress.Uri}", e);
-                channelFactory?.Abort();
-                throw;
-            }
-
-            return service;
-        }
-
-        /// <summary>
-        /// Tries to connect to the endpoint.
-        /// </summary>
-        /// <param name="binding">Bindingparameter of the endpoint.</param>
-        /// <param name="remoteAddress">Address to connect to.</param>
-        /// <param name="endpoint">Contains the endpoint when the connect was successfull.</param>
-        /// <param name="exception">Contains an exception when the connect was not successfull or the connect was succssfull, but a specific circumstance should be handled.
-        /// Contains <see cref="EndpointNotSupportedException"/> when the service contract of the endpoint seems not to be compatible.
-        /// Contains <see cref="EndpointNeedsUpgradeException"/> when the endpoint is using an older service contract than the client.
-        /// Contains <see cref="CommunicationException"/> when the connect try failed.
-        /// </param>
-        /// <returns>True, when the connect was successfull. False if not, then <paramref name="exception"/> contains more details.</returns>
-        public static bool TryCreateWuEndpoint(Binding binding, EndpointAddress remoteAddress, out WuEndpoint endpoint, out Exception exception)
-        {
-            if (binding == null) throw new ArgumentNullException(nameof(binding));
-            if (remoteAddress == null) throw new ArgumentNullException(nameof(remoteAddress));
-
-            IWuRemoteService service = null;
-            var callbackReceiver = new CallbackReceiver();
-
-            try
-            {
-                service = CreateChannel(binding, remoteAddress, callbackReceiver);
-            }
-            catch (Exception e)
-            {
-                Log.Warn($"Could not connect to endpoint {remoteAddress.Uri}.", e);
-                exception = e;
-                endpoint = null;
-                return false;
-            }
-
-            endpoint = null;
-            try
-            {
-                endpoint = new WuEndpoint(service, callbackReceiver, binding, remoteAddress);
-
-                try
-                {
-                    endpoint.Service.GetFQDN(); // Call arbitrary to verfiy that the service does not deny the usage.
-                    endpoint.EagerLoad();
-                }
-                catch (System.ServiceModel.Security.SecurityAccessDeniedException e)
-                {
-                    Log.Info($"Access denied: {remoteAddress.Uri}", e);
-                    throw new System.ServiceModel.Security.SecurityAccessDeniedException("Access denied. You must be a member of the local administrator group of the remote host to use the service.", e);
-                }
-
-                var contractAssembly = typeof(IWuRemoteService).Assembly.GetName();
-                var clientContractVersion = (VersionInfo)contractAssembly;
-                var minimumSupportedContractVersion = new VersionInfo(contractAssembly.Name, 1, 0, 0, 0);
-                var remoteContractVersion = endpoint.ServiceVersion?.FirstOrDefault(vi => vi.ComponentName.Equals(clientContractVersion.ComponentName) && vi.IsContract);
-
-                Log.Info($"Comparing service contract version between this application ({clientContractVersion}) and {remoteAddress.Uri} ({remoteContractVersion}).");
-
-                if (remoteContractVersion == null)
-                {
-                    Log.Info($"Endpoint {remoteAddress.Uri} does not support contract {contractAssembly.Name}.");
-                    throw new EndpointNotSupportedException($"The endpoint {endpoint.FQDN} is using an unkown service contract. Expected was '{minimumSupportedContractVersion.ToString()}' until '{clientContractVersion.ToString()}'");
-                }
-                if (remoteContractVersion.HasHigherVersionThan(clientContractVersion, true))
-                {
-                    Log.Info($"Endpoint {remoteAddress.Uri} is using a newer service contract {(remoteContractVersion)} than this application.");
-                    throw new EndpointNotSupportedException($"The endpoint {endpoint.FQDN} is using a newer service contract ({remoteContractVersion.ToString()}) than this client supports. Supported is '{minimumSupportedContractVersion.Major}.{minimumSupportedContractVersion.Minor}.*.*.");
-                }
-                if (remoteContractVersion.HasLowerVersionThan(clientContractVersion, true))
-                {
-                    Log.Info($"Endpoint {remoteAddress.Uri} needs upgrade ({remoteContractVersion}).");
-                    exception = new EndpointNeedsUpgradeException(endpoint);
-                    return true;
-                }
-                exception = null;
-                return true;
-            }
-            catch (Exception e)
-            {
-                Log.Warn($"Could not connect to endpoint {remoteAddress.Uri}.", e);
-                endpoint?.Dispose();
-                exception = e;
-                endpoint = null;
-                return false;
-            }
+            _ = FQDN;
+            _ = ServiceVersion;
+            _ = State;
+            _ = Settings;
+            _ = Updates;
         }
 
         public void Dispose()
         {
             lock (ServiceLock)
             {
-                if (Log.IsDebugEnabled) { Log.Debug($"Disposing endpoint {FQDN}"); }
+                if (Log.IsDebugEnabled) { Log.Debug($"Disposing endpoint {_fqdn}"); }
                 try
                 {
                     ((IChannel)Service)?.Close();
@@ -438,7 +313,8 @@ namespace WcfWuRemoteClient.Models
                 {
                     Log.Warn(e);
                 }
-                finally {
+                finally
+                {
                     _callbackReceiver = null;
                     Service = null;
                     IsDisposed = true;
@@ -544,6 +420,36 @@ namespace WcfWuRemoteClient.Models
             }
         }
 
+        private void Connect()
+        {
+
+            IWuRemoteService service = null;
+            var callbackReceiver = new CallbackReceiver();
+
+            lock (ServiceLock)
+            {
+                ThrowIfDisposed();
+                service = _serviceFactory.GetInstance(_binding, _address, callbackReceiver);
+                if (!(service is IChannel)) throw new InvalidOperationException(
+                    $"{nameof(service)} must implement interface {nameof(IChannel)}.");
+
+                if (service != null)
+                {
+                    var channel = ((IChannel)service);
+                    channel.Faulted += (s, e) => { OnPropertyChanged("ConnectionState"); };
+                    channel.Closed += (s, e) => { OnPropertyChanged("ConnectionState"); };
+                    channel.Closing += (s, e) => { OnPropertyChanged("ConnectionState"); };
+                    channel.Opened += (s, e) => { OnPropertyChanged("ConnectionState"); };
+                    channel.Opening += (s, e) => { OnPropertyChanged("ConnectionState"); };
+
+                    _callbackReceiver = callbackReceiver;
+                    _callbackReceiver.Endpoint = this;
+                    Service = service;
+                }
+            }
+            OnPropertyChanged("ConnectionState");
+        }
+
         /// <summary>
         /// Recreates a channel to the endpoint if the current channel is not longer connected.
         /// Does nothing if the current channel is still open. Throws expections when the reconnect fails.
@@ -553,31 +459,7 @@ namespace WcfWuRemoteClient.Models
             var channel = (IChannel)Service;
             if (channel.State == CommunicationState.Opened || channel.State == CommunicationState.Created) return;
             Log.Info($"Reconnecting to {FQDN}.");
-
-            IWuRemoteService service = null;
-            var callbackReceiver = new CallbackReceiver();
-
-            lock (ServiceLock)
-            {
-                ThrowIfDisposed();
-                try
-                {
-                    service = CreateChannel(_binding, _address, callbackReceiver);
-                }
-                catch (Exception e)
-                {
-                    Log.Error($"Reconnecting to {FQDN} failed.", e);
-                    throw;
-                }
-
-                if (service != null)
-                {
-                    _callbackReceiver = callbackReceiver;
-                    _callbackReceiver.Endpoint = this;
-                    Service = service;
-                }
-            }
-            OnPropertyChanged("ConnectionState");
+            Connect();
         }
 
         #endregion

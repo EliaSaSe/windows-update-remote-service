@@ -18,46 +18,60 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.ServiceModel;
+using System.ServiceModel.Channels;
 using System.Threading.Tasks;
 using WcfWuRemoteClient.Models;
 using WcfWuRemoteClient.ViewModels;
-using WcfWuRemoteService;
-using WcfWuRemoteService.Helper;
-using WindowsUpdateApiController;
-using WuApiMocks;
-using WuDataContract.Interface;
 
 namespace WcfWuRemoteClientUnitTest
 {
     [TestClass]
     public class AddHostViewModelTest
     {
-        private static ServiceHost _hosting;
+        delegate bool TryCreateWuEndpointCallback(
+            Binding binding, 
+            EndpointAddress address,
+            out IWuEndpoint endpoint, 
+            out Exception ex);
 
-        [ClassInitialize]
-        public static void ClassSetup(TestContext context)
+        private class WuEndpointFactoryMock : WuEndpointFactory
         {
-            _ = context; // The MSTest expects this parameter to be present. But it's not needed.
-            
-            var simulator = new WuApiSimulator().SetSearchTime(1).SetDownloadTime(1)
-                .SetInstallTime(1).Configure();
-            var factory = new Mock<WuApiControllerFactory>();
-            factory.Setup(f => f.GetController()).Returns(new WuApiController(simulator.UpdateSession, simulator.UpdateCollectionFactory, CommonMocks.GetSystemInfo()));
+            readonly Exception _exception;
+            readonly IEnumerable<IWuEndpoint> _endpoint;
+            readonly bool _result;
+            IEnumerator<IWuEndpoint> _enumerator;
+            readonly object _lock = new object();
 
-            var service = new WuRemoteService(factory.Object, new OperationContextProvider(), new WuApiConfigProvider());
-            _hosting = new ServiceHost(service);
-            _hosting.AddServiceEndpoint(typeof(IWuRemoteService), new NetTcpBinding(), $"net.tcp://0.0.0.0:8523/WuRemoteService");
-            _hosting.Open();
-            if (!(_hosting.State == CommunicationState.Created || _hosting.State == CommunicationState.Opened)) throw new Exception($"Can not setup {nameof(WuRemoteService)} to run client tests.");
-        }
+            public WuEndpointFactoryMock(IWuEndpoint endpoint, Exception exception, bool result)
+            {
+                _endpoint = new[] { endpoint };
+                _exception = exception;
+                _result = result;
+            }
 
-        [ClassCleanup]
-        public static void ClassCleanup()
-        {
-            _hosting?.Close();
-            _hosting = null;
+            public WuEndpointFactoryMock(Exception exception, bool result, params IWuEndpoint[] endpoints)
+            {
+                _endpoint = endpoints;
+                _exception = exception;
+                _result = result;
+            }
+
+            public override bool TryCreateWuEndpoint(Binding binding, EndpointAddress remoteAddress, out IWuEndpoint endpoint, out Exception exception)
+            {
+                lock (_lock)
+                {
+                    if (_enumerator == null) _enumerator = _endpoint?.GetEnumerator();
+                    _enumerator?.MoveNext();
+
+                    endpoint = _enumerator?.Current ?? null;
+                    exception = _exception;
+                    return _result;
+                }
+            }
         }
 
         /// <summary>
@@ -83,7 +97,7 @@ namespace WcfWuRemoteClientUnitTest
                     return task.Result;
                 }
             }
-            catch(AggregateException e)
+            catch (AggregateException e)
             {
                 if (e.InnerExceptions.Count == 1) throw e.InnerExceptions.First();
                 throw;
@@ -94,7 +108,13 @@ namespace WcfWuRemoteClientUnitTest
         [TestMethod, TestCategory("Connect")]
         public void Should_ConnectToEndpointWithDefaultSettings_When_OnlyHostnameGiven()
         {
-            var result = WaitForTaskAndThrow(AddHostViewModel.ConnectToHosts(new WuEndpointCollection(), "localhost"), 5000);
+            var wuEndpoint = new Mock<IWuEndpoint>();
+            wuEndpoint.Setup(e => e.ConnectionState).Returns(CommunicationState.Created);
+
+            var result = WaitForTaskAndThrow(AddHostViewModel.ConnectToHosts(
+                new WuEndpointFactoryMock(wuEndpoint.Object, null, true),
+                new WuEndpointCollection(),
+                "localhost"), 5000);
 
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Count() == 1);
@@ -104,7 +124,10 @@ namespace WcfWuRemoteClientUnitTest
         [TestMethod, TestCategory("Connect")]
         public void Should_IndicateFailure_When_FailedToConnect()
         {
-            var result = WaitForTaskAndThrow(AddHostViewModel.ConnectToHosts(new WuEndpointCollection(), "test"), 5000);
+            var result = WaitForTaskAndThrow(AddHostViewModel.ConnectToHosts(
+                new WuEndpointFactoryMock(null, new Exception("mock"), false),
+                new WuEndpointCollection(),
+                "test"), 5000);
 
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Count() == 1);
@@ -115,44 +138,116 @@ namespace WcfWuRemoteClientUnitTest
         [TestMethod, TestCategory("Connect")]
         public void Should_IgnoreEmptyLines_When_ConnectToHosts()
         {
-            var result = WaitForTaskAndThrow(AddHostViewModel.ConnectToHosts(new WuEndpointCollection(), $"test1{Environment.NewLine}{Environment.NewLine}{Environment.NewLine}test2"), 5000);
+            var wuEndpoint1 = new Mock<IWuEndpoint>();
+            wuEndpoint1.Setup(e => e.ConnectionState).Returns(CommunicationState.Created);
+            wuEndpoint1.Setup(e => e.FQDN).Returns("s1");
+            var wuEndpoint2 = new Mock<IWuEndpoint>();
+            wuEndpoint2.Setup(e => e.ConnectionState).Returns(CommunicationState.Created);
+            wuEndpoint2.Setup(e => e.FQDN).Returns("s2");
+
+            var result = WaitForTaskAndThrow(AddHostViewModel.ConnectToHosts(
+                new WuEndpointFactoryMock(null, true, wuEndpoint1.Object, wuEndpoint2.Object),
+                new WuEndpointCollection(),
+                $"test1{Environment.NewLine}{Environment.NewLine}{Environment.NewLine}test2"),
+                5000);
+
+            Trace.WriteLine(result.First().Url);
 
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Count() == 2);
-            Assert.IsTrue(result.All(r => !r.Success));
+            Assert.IsTrue(result.All(r => r.Success));
         }
 
         [TestMethod, TestCategory("Connect")]
         public void Should_DismissConnection_When_ConnectToAlreadyConntectedHost()
         {
+            var wuEndpoint = new Mock<IWuEndpoint>();
+            wuEndpoint.Setup(e => e.ConnectionState).Returns(CommunicationState.Created);
+            wuEndpoint.Setup(e => e.FQDN).Returns("samename");
+
             var endpointCol = new WuEndpointCollection();
-            var result1 = WaitForTaskAndThrow(AddHostViewModel.ConnectToHosts(endpointCol, $"localhost{Environment.NewLine}localhost"), 5000);
-            var result2 = WaitForTaskAndThrow(AddHostViewModel.ConnectToHosts(endpointCol, $"localhost"), 5000);
+
+            var result1 = WaitForTaskAndThrow(AddHostViewModel.ConnectToHosts(
+                new WuEndpointFactoryMock(null, true, wuEndpoint.Object, wuEndpoint.Object),
+                endpointCol,
+                $"samename{Environment.NewLine}samename"), 5000);
+
+            var result2 = WaitForTaskAndThrow(AddHostViewModel.ConnectToHosts(
+                new WuEndpointFactoryMock(null, true, wuEndpoint.Object),
+                endpointCol,
+                $"samename"), 5000);
 
             Assert.IsTrue(result1.Count() == 1);
             Assert.IsTrue(result2.Count() == 0);
-            Assert.IsTrue(endpointCol.Count == 1);          
+            Assert.IsTrue(endpointCol.Count == 1);
         }
 
         [TestMethod, TestCategory("Connect")]
         public void Should_OnlyUseConnectedEndpoints_When_TestForAlreadyConntectedHost()
         {
-            var result1 = WaitForTaskAndThrow(AddHostViewModel.ConnectToHosts(new WuEndpointCollection(), $"test1{Environment.NewLine}localhost"), 5000);
-            Assert.IsTrue(result1.Count(e => e.Success)==1);
+            var endpointFactory = new Mock<WuEndpointFactory>();
+
+            var wuEndpoint1 = new Mock<IWuEndpoint>();
+            wuEndpoint1.Setup(e => e.ConnectionState).Returns(CommunicationState.Created);
+            wuEndpoint1.Setup(e => e.FQDN).Returns("t1");
+
+            endpointFactory.Setup(m => m.TryCreateWuEndpoint(
+                It.IsAny<Binding>(),
+                It.Is<EndpointAddress>(e => e.Uri.Host.Equals($"t1")),
+                out It.Ref<IWuEndpoint>.IsAny,
+                out It.Ref<Exception>.IsAny
+                )).Returns(new TryCreateWuEndpointCallback((Binding binding, EndpointAddress endpointAddress, 
+                    out IWuEndpoint enpoint, out Exception ex) =>
+                {
+                    enpoint = wuEndpoint1.Object;
+                    ex = null;
+                    return true;
+                }));
+
+            endpointFactory.Setup(m => m.TryCreateWuEndpoint(
+                It.IsAny<Binding>(),
+                It.Is<EndpointAddress>(e => e.Uri.Host.Equals($"t2")),
+                out It.Ref<IWuEndpoint>.IsAny,
+                out It.Ref<Exception>.IsAny
+                )).Returns(new TryCreateWuEndpointCallback((Binding binding, EndpointAddress endpointAddress,
+                    out IWuEndpoint enpoint, out Exception ex) =>
+                {
+                    enpoint = null;
+                    ex = new Exception("mock");
+                    return false;
+                }));
+
+            var result1 = WaitForTaskAndThrow(AddHostViewModel.ConnectToHosts(
+                endpointFactory.Object,
+                new WuEndpointCollection(),
+                $"t1{Environment.NewLine}t2"),
+                5000000);
+
+            Assert.IsTrue(result1.Count(e => e.Success) == 1);
         }
 
         [TestMethod, TestCategory("Connect")]
         public void Should_ContainSpecifiedUrl_When_CreateAddHostViewModel()
         {
             var url = "//net.tcp://test";
-            var result = WaitForTaskAndThrow(AddHostViewModel.ConnectToHosts(new WuEndpointCollection(), url), 2000);
+
+            var result = WaitForTaskAndThrow(AddHostViewModel.ConnectToHosts(
+                new Mock<WuEndpointFactory>().Object,
+                new WuEndpointCollection(),
+                url),
+                2000);
+
             Assert.AreEqual(result.First().Url, url);
         }
 
         [TestMethod, TestCategory("Connect"), TestCategory("No Null")]
         public void Should_ThrowException_When_InvalidUrlGiven()
         {
-            var result = WaitForTaskAndThrow(AddHostViewModel.ConnectToHosts(new WuEndpointCollection(), "//#?net.tcp://localhost:8523/WuRemoteService"), 2000);
+            var result = WaitForTaskAndThrow(AddHostViewModel.ConnectToHosts(
+                new Mock<WuEndpointFactory>().Object, 
+                new WuEndpointCollection(), 
+                "//#?net.tcp://localhost:8523/WuRemoteService"), 2000);
+
             Assert.IsFalse(result.First().Success);
             Assert.IsTrue(result.First().Exception is ArgumentException);
         }
@@ -161,14 +256,20 @@ namespace WcfWuRemoteClientUnitTest
         [ExpectedException(typeof(ArgumentNullException))]
         public void Should_NotAllowOnlyWhiteSpaces_When_ConnectToHosts()
         {
-            WaitForTaskAndThrow(AddHostViewModel.ConnectToHosts(new WuEndpointCollection(), $"   {Environment.NewLine} {Environment.NewLine}"), 2000);
+            WaitForTaskAndThrow(AddHostViewModel.ConnectToHosts(
+                new Mock<WuEndpointFactory>().Object, 
+                new WuEndpointCollection(), 
+                $"   {Environment.NewLine} {Environment.NewLine}"), 
+                2000);
         }
 
         [TestMethod, TestCategory("Connect"), TestCategory("No Null")]
         [ExpectedException(typeof(ArgumentNullException))]
         public void Should_NotAllowNullString_When_ConnectToHosts()
         {
-            WaitForTaskAndThrow(AddHostViewModel.ConnectToHosts(new WuEndpointCollection(), null), 2000);
+            WaitForTaskAndThrow(AddHostViewModel.ConnectToHosts(
+                new WuEndpointFactory(), 
+                new WuEndpointCollection(), null), 2000);
         }
 
     }

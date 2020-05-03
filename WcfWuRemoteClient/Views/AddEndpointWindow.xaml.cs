@@ -28,16 +28,16 @@ namespace WcfWuRemoteClient.Views
     {
         readonly IModalService _modalService = new WpfModalService();
         readonly WuEndpointCollection _endpointCollection;
+        readonly WuEndpointFactory _wuEndpointFactory;
 
-        public AddEndpointWindow(IModalService modalService, WuEndpointCollection endpointCollection)
-        {
-            if (modalService == null) throw new ArgumentNullException(nameof(modalService));
-            if (endpointCollection == null) throw new ArgumentNullException(nameof(endpointCollection));
+        public AddEndpointWindow(IModalService modalService, WuEndpointCollection endpointCollection, 
+            WuEndpointFactory endpointFactory)
+        {          
+            _modalService = modalService ?? throw new ArgumentNullException(nameof(modalService));
+            _endpointCollection = endpointCollection ?? throw new ArgumentNullException(nameof(endpointCollection));
+            _wuEndpointFactory = endpointFactory;
 
             InitializeComponent();
-
-            _modalService = modalService;
-            _endpointCollection = endpointCollection;
 
             TextBoxUrlInput.Text = $"{AddHostViewModel.DefaultScheme}://localhost:{AddHostViewModel.DefaultPort}/{AddHostViewModel.DefaultPath}";
         }
@@ -60,7 +60,7 @@ namespace WcfWuRemoteClient.Views
         {
             if (String.IsNullOrWhiteSpace(TextBoxUrlInput.Text)) return;
             BeginLoadingIndication();
-            var result = await AddHostViewModel.ConnectToHosts(_endpointCollection, TextBoxUrlInput.Text);
+            var result = await AddHostViewModel.ConnectToHosts(_wuEndpointFactory, _endpointCollection, TextBoxUrlInput.Text);
             StopLoadingIndication();
             if (result.Any(a => a.Success && a.Exception is EndpointNeedsUpgradeException))
             {

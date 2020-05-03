@@ -48,9 +48,10 @@ namespace WcfWuRemoteClient.ViewModels
             Url = url;
         }
 
-        async private static Task<AddHostViewModel> ConnectToHost(string url)
+        async private static Task<AddHostViewModel> ConnectToHost(WuEndpointFactory endpointFactory, string url)
         {
             if (String.IsNullOrWhiteSpace(url)) throw new ArgumentNullException(nameof(url));
+            if (endpointFactory == null) throw new ArgumentNullException(nameof(endpointFactory));
 
             Task<AddHostViewModel> addEndpoint = Task.Run(() =>
             {
@@ -62,9 +63,8 @@ namespace WcfWuRemoteClient.ViewModels
 
                     var remoteAddr = new EndpointAddress(uri.ToString());
                     var binding = new NetTcpBinding();
-                    WuEndpoint endpoint = null;
-                    Exception exception = null;
-                    if (WuEndpoint.TryCreateWuEndpoint(binding, remoteAddr, out endpoint, out exception))
+                    if (endpointFactory.TryCreateWuEndpoint(binding, remoteAddr, 
+                        out IWuEndpoint endpoint, out Exception exception))
                     {
                         Debug.Assert(exception == null || exception is EndpointNeedsUpgradeException);
                         return new AddHostViewModel(uri.ToString(), true, exception, endpoint);
@@ -100,8 +100,10 @@ namespace WcfWuRemoteClient.ViewModels
             return uriResult;
         }
 
-        async public static Task<IEnumerable<AddHostViewModel>> ConnectToHosts(WuEndpointCollection endpointCollection, string urls)
+        async public static Task<IEnumerable<AddHostViewModel>> ConnectToHosts(
+            WuEndpointFactory endpointFactory, WuEndpointCollection endpointCollection, string urls)
         {
+            if (endpointFactory == null) throw new ArgumentNullException(nameof(endpointFactory));
             if (endpointCollection == null) throw new ArgumentNullException(nameof(endpointCollection));
             if (String.IsNullOrWhiteSpace(urls)) throw new ArgumentNullException(nameof(urls));
 
@@ -112,7 +114,7 @@ namespace WcfWuRemoteClient.ViewModels
                 while ((line = await reader.ReadLineAsync()) != null)
                 {
                     if (String.IsNullOrWhiteSpace(line)) continue;
-                    var connectTask = ConnectToHost(line);
+                    var connectTask = ConnectToHost(endpointFactory, line);
                     runningActions.Add(connectTask);
                 }
             }

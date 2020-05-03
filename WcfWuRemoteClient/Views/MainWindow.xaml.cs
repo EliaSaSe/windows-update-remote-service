@@ -51,7 +51,7 @@ namespace WcfWuRemoteClient.Views
             if (_addWindow == null || !_addWindow.IsVisible)
             {
                 _addWindow?.Close();
-                _addWindow = new AddEndpointWindow(new WpfModalService(), Model.Endpoints);
+                _addWindow = new AddEndpointWindow(new WpfModalService(), Model.Endpoints, new WuEndpointFactory());
             }
             _addWindow.Show();
             _addWindow.Activate();
