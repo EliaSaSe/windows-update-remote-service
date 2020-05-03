@@ -23,7 +23,13 @@ jobs:
       - name: Run unit tests
         run: |
           function Invoke-VSTest {
+          param(
+            [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)] 
+            [string]$args
+          )
+          Process {
             & "vstest.console.exe" $args
             if(-not $?){ throw "fail!" }
+           }
           }
-          Invoke-VSTest "WcfWuRemoteClientUnitTest/bin/Release/MyTestProject.Test.dll"
+          Get-Childitem -Directory -Recurse | ? { $_.FullName -like '*\bin\Release' } | Get-ChildItem -Recurse -File -Filter *UnitTest.dll | Invoke-VSTest
