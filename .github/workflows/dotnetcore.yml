@@ -1,5 +1,3 @@
-name: .NET Core
-
 on:
   push:
     branches: [ master ]
@@ -8,18 +6,24 @@ on:
 
 jobs:
   build:
-
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 3.1.101
-    - name: Install dependencies
-      run: dotnet restore
-    - name: Build
-      run: dotnet build --configuration Release --no-restore
-    - name: Test
-      run: dotnet test --no-restore --verbosity normal
+      - uses: actions/checkout@v2
+
+      - name: Setup .net framework env
+        uses: vrnobody/Setup-DotNetFrameworkEnv@v1
+
+      - name: Restore Nuget packages
+        run: nuget restore WindowsUpdateControlService.sln
+
+      - name: Build solution
+        run: msbuild WindowsUpdateControlService.sln -p:Configuration=Release
+
+      - name: Run unit tests
+        run: |
+          function Invoke-VSTest {
+            & "vstest.console.exe" $args
+            if(-not $?){ throw "fail!" }
+          }
+          Invoke-VSTest "WcfWuRemoteClientUnitTest/bin/Release/MyTestProject.Test.dll"
