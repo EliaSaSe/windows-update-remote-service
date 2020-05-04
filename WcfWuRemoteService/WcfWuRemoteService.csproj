@@ -59,7 +59,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Update="App.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
     <None Update="Log.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

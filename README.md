@@ -12,7 +12,7 @@
 	- [Requirements](#requirements)
 	- [Installation](#installation)
 		- [Agent](#agent)
-			- [Configure App.config](#configure-appconfig)
+			- [Configure WcfWuRemoteService.exe.config](#configure-wcfwuremoteserviceexeconfig)
 			- [Configure Log.config](#configure-logconfig)
 			- [Register service](#register-service)
 			- [Least privileges](#least-privileges)
@@ -85,7 +85,7 @@ The agent is designed as long running process with a small footprint on the host
 
 Unpack the zip and copy the content to the desired location. Before you start the agent or install it as service, you may want to configure the agent. The agent is operable with the default settings. For testing purposes, you can start the agent as console application by simply executing ``WcfWuRemoteService.exe``.
 
-#### Configure App.config
+#### Configure WcfWuRemoteService.exe.config
 
 There are only a few settings, that makes sense to be changed:
 
