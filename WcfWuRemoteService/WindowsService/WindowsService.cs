@@ -35,9 +35,20 @@ namespace WcfWuRemoteService.WindowsService
         private static readonly ILog Log = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         private ServiceWorker _worker;
         private readonly int shutdownTimeout = 10000;
+
         private delegate bool EventHandler(CtrlType sig);
+
         [DllImport("Kernel32")]
         private static extern bool SetConsoleCtrlHandler(EventHandler handler, bool add);
+
+        /// <summary>
+        /// A reference to the event handler is required during the process life time. 
+        /// This reference prevents GC collection.
+        /// "'CallbackOnCollectedDelegate' : A callback was made on a garbage collected delegate of type ... 
+        /// ... delegates to unmanaged code ... must be kept alive by the managed application ..."
+        /// </summary>
+        private static EventHandler eventHandler;
+
         private enum CtrlType
         {
             CtrlCEvent = 0,
@@ -61,7 +72,7 @@ namespace WcfWuRemoteService.WindowsService
             if (Environment.UserInteractive) // Run as console application
             {
                 var shutdownEvent = new ManualResetEventSlim(false);
-                var handler = new EventHandler(sig =>
+                eventHandler = new EventHandler(sig =>
                 {
                     // https://docs.microsoft.com/en-us/windows/console/handlerroutine
                     Log.Info(@"Exiting process due event: " + sig.ToString());
@@ -74,7 +85,7 @@ namespace WcfWuRemoteService.WindowsService
                 PrintBoilerplate();
                 Log.Debug("Starting in interactive mode.");
 
-                SetConsoleCtrlHandler(handler, true);
+                SetConsoleCtrlHandler(eventHandler, true);
                 service.OnStart(args);
                 shutdownEvent.Wait(); // Waiting shutdown event
             }
