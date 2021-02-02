@@ -20,7 +20,7 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="log4net" Version="2.0.5" />
+    <PackageReference Include="log4net" Version="2.0.10" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\WuDataContract\WuDataContract.csproj" />
