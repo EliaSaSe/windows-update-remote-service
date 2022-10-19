@@ -16,6 +16,7 @@
         <TextBlock x:Name="TextBlock" Grid.Row="0" HorizontalAlignment="Stretch" TextWrapping="Wrap" Text="Please enter one url per row:" VerticalAlignment="Stretch"/>
         <TextBox x:Name="TextBoxUrlInput" Grid.Row="1" TextWrapping="NoWrap" AcceptsReturn="True" MinHeight="100" Height="auto" />
         <Button x:Name="ButtonAddEndpoints" Grid.Row="2" Content="Add" Width="100px" HorizontalAlignment="Right" Click="ButtonAddEndpoints_Click" />
+        <Button x:Name="ButtonAddEndpointsFromFile" Grid.Row="2" Content="Add from File..." Width="100px" HorizontalAlignment="Left" Click="ButtonAddEndpointsFromFile_Click" />
         <views:LoadingIndicator Grid.Row="2" Height="15" Width="15" x:Name="LoadingIndicator" />
     </Grid>
 </Window>
