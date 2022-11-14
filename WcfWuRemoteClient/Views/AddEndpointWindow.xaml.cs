@@ -15,8 +15,11 @@
     You should have received a copy of the GNU Lesser General Public License
     along with this program.If not, see<https://www.gnu.org/licenses/>.
 */
+
 using System;
+using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using WcfWuRemoteClient.InteractionServices;
 using WcfWuRemoteClient.Models;
@@ -30,16 +33,17 @@ namespace WcfWuRemoteClient.Views
         readonly WuEndpointCollection _endpointCollection;
         readonly WuEndpointFactory _wuEndpointFactory;
 
-        public AddEndpointWindow(IModalService modalService, WuEndpointCollection endpointCollection, 
+        public AddEndpointWindow(IModalService modalService, WuEndpointCollection endpointCollection,
             WuEndpointFactory endpointFactory)
-        {          
+        {
             _modalService = modalService ?? throw new ArgumentNullException(nameof(modalService));
             _endpointCollection = endpointCollection ?? throw new ArgumentNullException(nameof(endpointCollection));
             _wuEndpointFactory = endpointFactory;
 
             InitializeComponent();
 
-            TextBoxUrlInput.Text = $"{AddHostViewModel.DefaultScheme}://localhost:{AddHostViewModel.DefaultPort}/{AddHostViewModel.DefaultPath}";
+            TextBoxUrlInput.Text =
+                $"{AddHostViewModel.DefaultScheme}://localhost:{AddHostViewModel.DefaultPort}/{AddHostViewModel.DefaultPath}";
         }
 
         private void BeginLoadingIndication()
@@ -58,26 +62,55 @@ namespace WcfWuRemoteClient.Views
 
         private async void ButtonAddEndpoints_Click(object sender, RoutedEventArgs e)
         {
-            if (String.IsNullOrWhiteSpace(TextBoxUrlInput.Text)) return;
+            var inputText = TextBoxUrlInput.Text;
+            await AddEndpoints(inputText);
+        }
+
+        private async Task AddEndpoints(string inputText)
+        {
+            if (String.IsNullOrWhiteSpace(inputText)) return;
             BeginLoadingIndication();
-            var result = await AddHostViewModel.ConnectToHosts(_wuEndpointFactory, _endpointCollection, TextBoxUrlInput.Text);
+            var result = await AddHostViewModel.ConnectToHosts(_wuEndpointFactory, _endpointCollection, inputText);
             StopLoadingIndication();
+            
             if (result.Any(a => a.Success && a.Exception is EndpointNeedsUpgradeException))
             {
-                string text = 
+                string text =
                     "The following hosts are outdated and should be upgraded:"
                     + Environment.NewLine
-                    + String.Join(Environment.NewLine, result.Where(a => a.Success && a.Exception is EndpointNeedsUpgradeException).Select(a => a.Endpoint.FQDN));
+                    + String.Join(Environment.NewLine,
+                        result.Where(a => a.Success && a.Exception is EndpointNeedsUpgradeException)
+                            .Select(a => a.Endpoint.FQDN));
                 _modalService.ShowMessageBox(text, "Outdated hosts.", MessageType.Info);
             }
+
             if (result.Any(a => !a.Success))
             {
-                TextBoxUrlInput.Text = String.Join(Environment.NewLine, result.Where(a => !a.Success).Select(a => a.Url));
-                _modalService.ShowMessageBox(String.Join(Environment.NewLine + Environment.NewLine, result.Where(a => !a.Success).Select(a => a.Url + ": " + a.Exception.Message)), "Connect to hosts", MessageType.Warning);
+                TextBoxUrlInput.Text =
+                    String.Join(Environment.NewLine, result.Where(a => !a.Success).Select(a => a.Url));
+                _modalService.ShowMessageBox(
+                    String.Join(Environment.NewLine + Environment.NewLine,
+                        result.Where(a => !a.Success).Select(a => a.Url + ": " + a.Exception.Message)),
+                    "Connect to hosts", MessageType.Warning);
             }
             else
             {
                 Close();
+            }
+
+        }
+
+        private async void ButtonAddEndpointsFromFile_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new Microsoft.Win32.OpenFileDialog();
+            dialog.DefaultExt = ".txt"; // Default file extension
+            dialog.Filter = "Text documents (.txt)|*.txt"; // Filter files by extension
+            var dialogResult = dialog.ShowDialog();
+
+            if (dialogResult is true)
+            {
+                var inputText = File.ReadAllText(dialog.FileName);
+                await AddEndpoints(inputText);
             }
         }
     }
