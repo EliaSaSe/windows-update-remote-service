@@ -75,7 +75,7 @@ When UAC is turned on, you may need to start the client with elevated permission
 
 The agent is designed as long running process with a small footprint on the host system. While the agent itself does not consume a lot of CPU cycles, remember that Windows Update can and will use a considerable amount of ressources, when an action is requested.
 
-* Agent/Client: Windows Server 2008 R2 / Windows 7 up to Windows Server 2016 / Windows 10 and .NET Framework 4.5.2
+* Agent/Client: Windows Server 2008 R2 / Windows 7 up to Windows Server 2016 / Windows 10 and .NET Framework 4.6.2
 * Agent: Differences between desktop and core variants could not be observed
 * Agent: 10-20 MBytes of disk and RAM space
 
